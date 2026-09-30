@@ -1,4 +1,4 @@
-"""Junta questões, matérias e gabaritos e grava os arquivos que o app lê (q-<matéria>.json e meta.json)."""
+"""Junta questões, matérias, temas e gabaritos e grava os arquivos que o app lê (q-<matéria>.json e meta.json)."""
 import collections
 import json
 import os
@@ -6,6 +6,7 @@ import re
 
 import fontes
 from gabaritos import gabarito
+from temas import atribuir_temas, resumo_de_temas
 
 ILEGIVEIS = re.compile(r"[\x00-\x08\x0b-\x1fϢ-Ͽ]")  # restos de fonte sem mapa de caracteres
 FIM_DA_PROVA = re.compile(r"\s*(QUESTIONÁRIO DE PERCEPÇÃO|Questionário de percepção|CRONOGRAMA OPERACIONAL).*$", re.S)
@@ -79,13 +80,17 @@ def montar(brutas, materias, destino):
             })
             por_materia[materia] += 1
 
+    for materia, lista in banco.items():
+        atribuir_temas(materia, lista)
+    temas = resumo_de_temas(banco)
+
     os.makedirs(destino, exist_ok=True)
     for materia, lista in banco.items():
         with open(os.path.join(destino, f"q-{materia}.json"), "w") as f:
             json.dump(lista, f, ensure_ascii=False, separators=(",", ":"))
     exames = {q["id"].rsplit("-", 1)[0] for lista in banco.values() for q in lista}
     meta = {"counts": dict(por_materia), "total": sum(por_materia.values()),
-            "exams": len(exames), "anuladas": descartes["anulada"]}
+            "exams": len(exames), "anuladas": descartes["anulada"], "temas": temas}
     with open(os.path.join(destino, "meta.json"), "w") as f:
         json.dump(meta, f, ensure_ascii=False)
     return meta, dict(descartes)

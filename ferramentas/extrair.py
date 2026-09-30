@@ -12,7 +12,8 @@ import pymupdf
 import fontes
 
 # Cabeçalhos e rodapés que se repetem em todas as páginas.
-CABECALHO = re.compile(r"EXAME (DE|DO) ORDEM|Exame de Ordem Uni|PROVA APLICADA|P[áa]gina \d|Tipo Branc|TIPO 0?1|Qualquer semelhan", re.I)
+# Estrito de propósito: "Exame de Ordem" sozinho aparece em enunciados de Ética.
+CABECALHO = re.compile(r"EXAME (DE|DO) ORDEM UNI|PROVA APLICADA|^P[áa]gina \d+$|Tipo\s+Branc|TIPO 0?1\s*[–-]|Qualquer semelhan", re.I)
 # "(A) texto" ou "A) texto"
 ALTERNATIVA = re.compile(r"^\(?([A-D])\)\s*(.*)$")
 # Rótulo da questão: "12", "Questão 12", "Questão 22*", "06 A00420" (código usado em 2010.2)

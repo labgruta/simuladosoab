@@ -43,6 +43,10 @@ def main():
     meta, descartes = montar(brutas, materias, RAIZ)
     print(f"\n{meta['total']} questões de {meta['exams']} provas gravadas em {RAIZ}")
     print(f"Descartadas: {descartes}")
+    print("\nTemas mais recorrentes por matéria:")
+    for materia, temas in meta["temas"].items():
+        rec = [f"{t['nome']} ({t['n']})" for t in temas if t["rec"]]
+        print(f"  {materia:15s} {'; '.join(rec)}")
 
 
 if __name__ == "__main__":

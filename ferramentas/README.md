@@ -30,7 +30,8 @@ Os PDFs são procurados em `~/Downloads`. Para usar outra pasta: `OAB_PDFS=/cami
 | `gabaritos.py` | Lê o gabarito tipo 1 (três formatos diferentes ao longo dos anos). |
 | `lexico.py` | Palavras-chave e leis citadas que indicam cada matéria. |
 | `classificar.py` | Divide cada prova em blocos de matérias, seguindo a ordem e a quantidade do edital de cada época. |
+| `temas.py` | Classifica cada questão num tema da matéria (ex.: Honorários, em Ética) e marca os temas mais recorrentes, os que somados cobrem 60% das questões da matéria. |
 | `montar.py` | Junta tudo, limpa o texto, descarta anuladas e grava os JSON. |
 | `gerar.py` | Roda as etapas acima. A extração fica em cache em `saida/`. |
 
-Os cadernos não dizem a matéria de cada questão, então ela é deduzida pela posição na prova. As fronteiras entre matérias vizinhas (ex.: Trabalho e Processo do Trabalho) podem ter pequenos desvios.
+Os cadernos não dizem a matéria nem o tema de cada questão. A matéria é deduzida pela posição na prova e o tema, por palavras-chave com peso maior para termos específicos. As fronteiras entre matérias vizinhas (ex.: Trabalho e Processo do Trabalho) podem ter pequenos desvios.
