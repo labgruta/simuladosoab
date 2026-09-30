@@ -1,0 +1,4 @@
+pymupdf
+# OCR das páginas com fonte ilegível (só macOS)
+pyobjc-framework-Vision; sys_platform == "darwin"
+pyobjc-framework-Quartz; sys_platform == "darwin"
