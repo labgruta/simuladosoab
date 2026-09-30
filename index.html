@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulados OAB</title>
+<meta name="description" content="Simulador da 1ª fase da OAB com questões oficiais de 46 provas, filtradas por matéria.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3a5f'/%3E%3Cpath d='M16 6v20M9 11h14M9 11l-3 7h6zM23 11l-3 7h6z' stroke='%23f2c14e' stroke-width='2' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <button class="brand" id="homeBtn" type="button" aria-label="Voltar ao início">
+      <span class="logo" aria-hidden="true">⚖</span>
+      <span><strong>Simulados OAB</strong><small id="tagline">1ª fase · questões oficiais</small></span>
+    </button>
+    <div class="top-actions">
+      <span id="timer" class="timer" hidden></span>
+      <button id="themeBtn" class="icon-btn" type="button" aria-label="Alternar tema claro/escuro">◐</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- CONFIGURAÇÃO -->
+  <section id="view-setup" class="view">
+    <div id="resume" class="card resume" hidden>
+      <div>
+        <strong>Você tem um simulado em andamento.</strong>
+        <span id="resumeInfo" class="muted"></span>
+      </div>
+      <div class="row gap">
+        <button id="resumeBtn" class="btn primary" type="button">Continuar</button>
+        <button id="discardBtn" class="btn ghost" type="button">Descartar</button>
+      </div>
+    </div>
+
+    <div class="intro">
+      <h1>Monte seu simulado</h1>
+      <p class="muted" id="introStats">Carregando banco de questões…</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>1. Matérias</h2>
+        <span class="pill" id="selCount">0 de 3</span>
+      </div>
+      <p class="muted small">Escolha até <strong>3 matérias</strong> tocando nelas, ou use um dos botões de grupo abaixo (os grupos seguem a incidência das matérias na prova).</p>
+
+      <div class="presets" role="group" aria-label="Grupos de matérias">
+        <button class="preset" data-preset="etica" type="button">
+          <span class="preset-t">Estatuto da OAB e Código de Ética</span>
+          <span class="preset-d">A matéria que mais cai: 8 questões por prova</span>
+        </button>
+        <button class="preset" data-preset="t1" type="button">
+          <span class="preset-t">Mais recorrentes</span>
+          <span class="preset-d">Ética (8) · Civil, Proc. Civil, Constitucional, Penal e Proc. Penal (6 cada)</span>
+        </button>
+        <button class="preset" data-preset="t2" type="button">
+          <span class="preset-t">Recorrência média</span>
+          <span class="preset-d">Administrativo, Trabalho, Proc. Trabalho e Tributário (5 cada) · Empresarial (4)</span>
+        </button>
+        <button class="preset" data-preset="t3" type="button">
+          <span class="preset-t">Menos recorrentes</span>
+          <span class="preset-d">DH, Internacional, ECA, Ambiental, Consumidor, Filosofia, Previdenciário, Financeiro e Eleitoral</span>
+        </button>
+      </div>
+
+      <div id="subjects" class="subjects"></div>
+      <p id="limitMsg" class="warn small" hidden>Máximo de 3 matérias na seleção manual. Para mais, use um botão de grupo.</p>
+    </div>
+
+    <div class="card">
+      <h2>2. Configurações</h2>
+      <div class="grid2">
+        <label class="field">
+          <span>Número de questões</span>
+          <select id="qty">
+            <option value="10">10 questões</option>
+            <option value="20" selected>20 questões</option>
+            <option value="40">40 questões</option>
+            <option value="80">80 questões (prova completa)</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Provas de origem</span>
+          <select id="period">
+            <option value="all">Todas (2010 a 2026)</option>
+            <option value="23">XXIII Exame em diante (2017+)</option>
+            <option value="38">38º Exame em diante (formato atual, 2023+)</option>
+          </select>
+        </label>
+      </div>
+      <div class="toggles">
+        <label class="toggle"><input type="radio" name="mode" value="exam" checked><span><strong>Modo prova</strong><small>Gabarito só no final</small></span></label>
+        <label class="toggle"><input type="radio" name="mode" value="study"><span><strong>Modo estudo</strong><small>Mostra a resposta certa a cada questão</small></span></label>
+      </div>
+      <label class="check"><input type="checkbox" id="timed"> Cronometrar no ritmo da OAB (5h para 80 questões ≈ 3min45s por questão)</label>
+      <label class="check"><input type="checkbox" id="fresh" checked> Priorizar questões que ainda não respondi</label>
+    </div>
+
+    <div class="start-bar">
+      <p id="planInfo" class="muted small">Selecione ao menos uma matéria.</p>
+      <button id="startBtn" class="btn primary big" type="button" disabled>Iniciar simulado</button>
+    </div>
+
+    <div id="historyBox" class="card" hidden>
+      <div class="card-head">
+        <h2>Últimos simulados</h2>
+        <button id="clearHist" class="btn ghost small" type="button">Limpar</button>
+      </div>
+      <ul id="history" class="history"></ul>
+    </div>
+
+    <p class="foot muted small">
+      Questões dos cadernos oficiais (tipo 1) e gabaritos da OAB/FGV, do Exame 2010.2 ao 47º. Questões anuladas foram removidas.
+      A matéria de cada questão foi identificada automaticamente pela ordem dos blocos na prova, então pode haver pequenos desvios.
+    </p>
+  </section>
+
+  <!-- PROVA -->
+  <section id="view-quiz" class="view" hidden>
+    <div class="quiz-top">
+      <div>
+        <div class="progress"><div id="progBar"></div></div>
+        <p class="muted small" id="progText"></p>
+      </div>
+      <button id="gridBtn" class="btn ghost small" type="button" aria-expanded="false">Ver todas</button>
+    </div>
+    <nav id="grid" class="qgrid" hidden aria-label="Navegação entre questões"></nav>
+
+    <article class="card qcard" id="qcard">
+      <div class="qmeta">
+        <span class="tag" id="qSubject"></span>
+        <span class="muted small" id="qSource"></span>
+      </div>
+      <div class="qtext" id="qText"></div>
+      <div class="alts" id="alts" role="radiogroup" aria-label="Alternativas"></div>
+      <div id="feedback" class="feedback" hidden></div>
+    </article>
+
+    <div class="quiz-nav">
+      <button id="prevBtn" class="btn ghost" type="button">← Anterior</button>
+      <button id="flagBtn" class="btn ghost" type="button">☆ Marcar</button>
+      <button id="nextBtn" class="btn primary" type="button">Próxima →</button>
+    </div>
+    <div class="finish-row">
+      <button id="finishBtn" class="btn danger-ghost" type="button">Finalizar simulado</button>
+    </div>
+  </section>
+
+  <!-- RESULTADO -->
+  <section id="view-result" class="view" hidden>
+    <div class="card score-card">
+      <div class="score-ring" id="scoreRing"><span id="scorePct"></span></div>
+      <div>
+        <h1 id="scoreTitle"></h1>
+        <p id="scoreSub" class="muted"></p>
+        <p id="scoreNote" class="small"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Desempenho por matéria</h2>
+      <div id="bySubject" class="bars"></div>
+    </div>
+
+    <div class="row gap wrap-row">
+      <button id="retryWrong" class="btn primary" type="button">Refazer as que errei</button>
+      <button id="newBtn" class="btn ghost" type="button">Novo simulado</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Correção</h2>
+        <label class="check inline"><input type="checkbox" id="onlyWrong"> Só erros e em branco</label>
+      </div>
+      <div id="review" class="review"></div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
