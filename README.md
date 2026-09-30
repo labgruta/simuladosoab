@@ -12,6 +12,7 @@ Simulador online da 1ª fase do Exame de Ordem, com 3.665 questões oficiais de 
 - `q-<materia>.json`: questões de cada matéria (`q` enunciado, `a` alternativas, `r` índice da correta, `e` exame, `n` número da questão no caderno tipo 1).
 - `meta.json`: total de questões por matéria.
 - `wrangler.jsonc`: configuração do Cloudflare Workers (arquivos estáticos). O deploy roda `npx wrangler deploy`.
+- `ferramentas/`: scripts que geram o banco de questões a partir dos PDFs da OAB (não são publicados). Veja `ferramentas/README.md`.
 
 ## Origem dos dados
 

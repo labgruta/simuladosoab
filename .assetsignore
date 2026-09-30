@@ -1,4 +1,6 @@
 wrangler.jsonc
 README.md
 .assetsignore
+.gitignore
 .git
+ferramentas

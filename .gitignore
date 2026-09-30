@@ -1,0 +1,4 @@
+__pycache__/
+ferramentas/saida/
+ferramentas/.venv/
+.DS_Store
