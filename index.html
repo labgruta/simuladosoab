@@ -49,6 +49,10 @@
       <p class="muted small">Escolha até <strong>3 matérias</strong> tocando nelas, ou use um dos botões de grupo abaixo (os grupos seguem a incidência das matérias na prova).</p>
 
       <div class="presets" role="group" aria-label="Grupos de matérias">
+        <button class="preset wide" data-preset="todas" type="button">
+          <span class="preset-t">Todas as matérias</span>
+          <span class="preset-d">Prova completa: as 20 matérias na proporção da OAB (80 questões = 8 de Ética, 6 de Civil, 6 de Proc. Civil…)</span>
+        </button>
         <button class="preset" data-preset="etica" type="button">
           <span class="preset-t">Estatuto da OAB e Código de Ética</span>
           <span class="preset-d">A matéria que mais cai: 8 questões por prova</span>
@@ -97,12 +101,23 @@
         <label class="toggle"><input type="radio" name="mode" value="study"><span><strong>Modo estudo</strong><small>Mostra a resposta certa a cada questão</small></span></label>
       </div>
       <label class="check"><input type="checkbox" id="timed"> Cronometrar no ritmo da OAB (5h para 80 questões ≈ 3min45s por questão)</label>
+      <label class="check"><input type="checkbox" id="rec"> <span><strong>Só temas mais recorrentes</strong> de cada matéria: usa apenas questões dos assuntos que mais caíram nas 46 provas (ex.: em Ética, relação com o cliente, órgãos da OAB, inscrição, infrações, honorários e sociedade de advogados)</span></label>
+      <details id="recBox" class="rec-box" hidden>
+        <summary>Ver os temas considerados</summary>
+        <div id="recList" class="rec-list"></div>
+      </details>
       <label class="check"><input type="checkbox" id="fresh" checked> Priorizar questões que ainda não respondi</label>
     </div>
 
     <div class="start-bar">
-      <p id="planInfo" class="muted small">Selecione ao menos uma matéria.</p>
-      <button id="startBtn" class="btn primary big" type="button" disabled>Iniciar simulado</button>
+      <div>
+        <p id="planInfo" class="muted small">Selecione ao menos uma matéria.</p>
+        <p class="muted small">Cada clique sorteia um simulado novo, evitando repetir as questões dos sorteios anteriores.</p>
+      </div>
+      <div class="start-actions">
+        <button id="pdfBtn" class="btn ghost big" type="button" disabled>Baixar prova em PDF</button>
+        <button id="startBtn" class="btn primary big" type="button" disabled>Sortear simulado</button>
+      </div>
     </div>
 
     <div id="historyBox" class="card" hidden>
@@ -167,8 +182,9 @@
     </div>
 
     <div class="row gap wrap-row">
-      <button id="retryWrong" class="btn primary" type="button">Refazer as que errei</button>
-      <button id="newBtn" class="btn ghost" type="button">Novo simulado</button>
+      <button id="againBtn" class="btn primary" type="button">Sortear outro simulado</button>
+      <button id="retryWrong" class="btn ghost" type="button">Refazer as que errei</button>
+      <button id="newBtn" class="btn ghost" type="button">Mudar configuração</button>
     </div>
 
     <div class="card">
@@ -182,6 +198,7 @@
 </main>
 
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script src="pdf.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

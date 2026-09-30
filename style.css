@@ -193,3 +193,19 @@ select { width: 100%; font: inherit; padding: 9px 10px; border-radius: 10px; bor
   .start-bar .btn { width: 100%; }
   .brand small { display: none; }
 }
+
+/* v2: prova completa, temas recorrentes, PDF */
+.preset.wide { grid-column: 1 / -1; }
+.rec-box { margin: 2px 0 8px 26px; font-size: .85rem; }
+.rec-box summary { cursor: pointer; color: var(--brand); font-weight: 600; }
+.rec-list { margin-top: 8px; display: grid; gap: 6px; }
+.rec-list p { margin: 0; color: var(--muted); }
+.rec-list strong { color: var(--ink); }
+.start-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn.ghost.big:disabled { opacity: .45; cursor: not-allowed; }
+.qmeta .topic { font-size: .8rem; color: var(--muted); }
+@media (max-width: 640px) {
+  .start-actions { width: 100%; flex-direction: column-reverse; }
+  .start-actions .btn { width: 100%; }
+  .rec-box { margin-left: 0; }
+}

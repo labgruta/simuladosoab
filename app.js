@@ -27,6 +27,7 @@ const BY_ID = Object.fromEntries(SUBJECTS.map((s) => [s.id, s]));
 const ORDER = Object.fromEntries(SUBJECTS.map((s, i) => [s.id, i]));
 const TIER_LABEL = { 1: "Mais recorrentes", 2: "Recorrência média", 3: "Menos recorrentes" };
 const PRESETS = {
+  todas: { label: "Todas as matérias", ids: SUBJECTS.map((s) => s.id) },
   etica: { label: "Estatuto da OAB e Código de Ética", ids: ["etica"] },
   t1: { label: "Mais recorrentes", ids: SUBJECTS.filter((s) => s.tier === 1).map((s) => s.id) },
   t2: { label: "Recorrência média", ids: SUBJECTS.filter((s) => s.tier === 2).map((s) => s.id) },
@@ -35,6 +36,7 @@ const PRESETS = {
 const MAX_MANUAL = 3;
 const SEC_PER_Q = 225; // 5h / 80 questões
 const LETTERS = "ABCD";
+const RECENT_MAX = 400; // questões sorteadas recentemente, evitadas nos próximos sorteios
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -146,7 +148,10 @@ function toggleSubject(id) {
 function applyPreset(key) {
   $("#limitMsg").hidden = true;
   if (sel.preset === key) { sel.preset = null; sel.ids.clear(); }
-  else { sel.preset = key; sel.ids = new Set(PRESETS[key].ids); }
+  else {
+    sel.preset = key; sel.ids = new Set(PRESETS[key].ids);
+    if (key === "todas") $("#qty").value = "80";
+  }
   syncSelection();
 }
 function syncSelection() {
@@ -164,6 +169,7 @@ function settings() {
     mode: $("input[name=mode]:checked").value,
     timed: $("#timed").checked,
     fresh: $("#fresh").checked,
+    rec: $("#rec").checked,
   };
 }
 // Distribui N questões entre as matérias proporcionalmente ao peso na prova (maiores restos).
@@ -190,39 +196,124 @@ function allocate(ids, n, avail) {
 function updatePlan() {
   const ids = [...sel.ids].sort((a, b) => ORDER[a] - ORDER[b]);
   const btn = $("#startBtn");
-  if (!ids.length) { $("#planInfo").textContent = "Selecione ao menos uma matéria."; btn.disabled = true; return; }
+  if (!ids.length) {
+    $("#planInfo").textContent = "Selecione ao menos uma matéria.";
+    btn.disabled = true; $("#pdfBtn").disabled = true; renderRecList([], false);
+    return;
+  }
   const st = settings();
-  const avail = Object.fromEntries(ids.map((id) => [id, meta.counts[id] || 0]));
+  const avail = Object.fromEntries(ids.map((id) => [id, st.rec ? recCount(id) : meta.counts[id] || 0]));
   const plan = allocate(ids, st.qty, avail);
   const total = Object.values(plan).reduce((a, b) => a + b, 0);
   const parts = ids.filter((id) => plan[id]).map((id) => `${BY_ID[id].short} ${plan[id]}`);
   $("#planInfo").textContent = `${total} questões: ${parts.join(" · ")}`
+    + (st.rec ? " · só temas recorrentes" : "")
     + (st.timed ? ` · tempo: ${fmtTime(total * SEC_PER_Q)}` : "");
   btn.disabled = total === 0;
+  $("#pdfBtn").disabled = total === 0;
+  renderRecList(ids, st.rec);
+}
+
+// ---------- temas ----------
+function topics(id) { return (meta.temas && meta.temas[id]) || []; }
+function recTopics(id) { return new Set(topics(id).filter((t) => t.rec).map((t) => t.id)); }
+function recCount(id) { return topics(id).filter((t) => t.rec).reduce((a, t) => a + t.n, 0); }
+function topicName(sid, tid) {
+  const t = topics(sid).find((x) => x.id === tid);
+  return t && tid !== "outros" ? t.nome : "";
+}
+function renderRecList(ids, on) {
+  const box = $("#recBox");
+  box.hidden = !on || !ids.length;
+  if (box.hidden) return;
+  const list = $("#recList");
+  list.innerHTML = "";
+  for (const id of ids) {
+    const p = document.createElement("p");
+    const b = document.createElement("strong");
+    b.textContent = `${BY_ID[id].short}: `;
+    p.append(b, document.createTextNode(topics(id).filter((t) => t.rec).map((t) => `${t.nome} (${t.n})`).join(" · ")));
+    list.appendChild(p);
+  }
 }
 
 // ---------- montagem do simulado ----------
-async function buildSession() {
+// Sorteia as questões conforme a seleção atual. Cada chamada gera um sorteio novo: as questões
+// dos sorteios recentes (e, se marcado, as já respondidas) só entram se faltar questão.
+async function draw() {
   const st = settings();
   const ids = [...sel.ids].sort((a, b) => ORDER[a] - ORDER[b]);
   const minEx = st.period === "all" ? 0 : parseInt(st.period, 10);
-  const seen = new Set(store.get("oab.seen", []));
+  const seen = st.fresh ? new Set(store.get("oab.seen", [])) : new Set();
+  const recent = new Set(store.get("oab.recent", []));
   const pools = {};
   for (const id of ids) {
     const all = await loadSubject(id);
-    pools[id] = all.filter((q) => examOrdinal(q.id) >= minEx);
+    const rec = st.rec ? recTopics(id) : null;
+    pools[id] = all.filter((q) => examOrdinal(q.id) >= minEx && (!rec || rec.has(q.t)));
   }
   const avail = Object.fromEntries(ids.map((id) => [id, pools[id].length]));
   const plan = allocate(ids, st.qty, avail);
   const items = [];
   for (const id of ids) {
-    let list = shuffle(pools[id].slice());
-    if (st.fresh) list = list.filter((q) => !seen.has(q.id)).concat(list.filter((q) => seen.has(q.id)));
+    const tier = (q) => (seen.has(q.id) ? 2 : recent.has(q.id) ? 1 : 0);
+    const list = shuffle(pools[id].slice()).sort((a, b) => tier(a) - tier(b));
     for (const q of list.slice(0, plan[id])) items.push({ ...q, s: id });
   }
   if (!items.length) throw new Error("Não há questões para esse filtro.");
-  const label = sel.preset ? PRESETS[sel.preset].label : ids.map((id) => BY_ID[id].short).join(", ");
-  return newSession(items, st.mode, st.timed, label);
+  const drawn = items.map((q) => q.id);
+  store.set("oab.recent", drawn.concat([...recent].filter((x) => !drawn.includes(x))).slice(0, RECENT_MAX));
+  let label = sel.preset ? PRESETS[sel.preset].label : ids.map((id) => BY_ID[id].short).join(", ");
+  if (st.rec) label += " (temas recorrentes)";
+  const cfg = { ids, preset: sel.preset, st };
+  return { items, label, st, cfg };
+}
+async function buildSession() {
+  const { items, label, st, cfg } = await draw();
+  const s = newSession(items, st.mode, st.timed, label);
+  s.cfg = cfg;
+  return s;
+}
+function applyConfig(cfg) {
+  sel.ids = new Set(cfg.ids); sel.preset = cfg.preset;
+  $("#qty").value = String(cfg.st.qty);
+  $("#period").value = cfg.st.period;
+  $(`input[name=mode][value=${cfg.st.mode}]`).checked = true;
+  $("#timed").checked = cfg.st.timed;
+  $("#fresh").checked = cfg.st.fresh;
+  $("#rec").checked = !!cfg.st.rec;
+  syncSelection();
+}
+async function startNew() {
+  const btn = $("#startBtn");
+  btn.disabled = true; btn.textContent = "Sorteando…";
+  try {
+    session = await buildSession();
+    if (session.items.length < settings().qty) toast(`Só havia ${session.items.length} questões disponíveis com esse filtro.`);
+    saveSession();
+    startQuiz();
+  } catch (e) {
+    toast(e.message || "Erro ao montar o simulado.");
+  } finally {
+    btn.textContent = "Sortear simulado"; updatePlan();
+  }
+}
+async function downloadPdf() {
+  const btn = $("#pdfBtn");
+  btn.disabled = true; btn.textContent = "Gerando PDF…";
+  try {
+    const { items, label } = await draw();
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+    const rich = items.map((q) => ({ ...q, subjectName: BY_ID[q.s].name, subjectShort: BY_ID[q.s].short, topicName: topicName(q.s, q.t) }));
+    await window.SimuladoPdf.baixar(rich, { label, date: now.toLocaleDateString("pt-BR") }, `simulado-oab-${stamp}.pdf`);
+    toast(`PDF com ${items.length} questões baixado. Clique de novo para sortear outra prova.`);
+  } catch (e) {
+    toast(e.message || "Erro ao gerar o PDF.");
+  } finally {
+    btn.textContent = "Baixar prova em PDF"; updatePlan();
+  }
 }
 function newSession(items, mode, timed, label) {
   return {
@@ -308,7 +399,8 @@ function renderQuestion() {
   const i = session.idx, q = session.items[i], a = session.answers[i];
   const locked = session.mode === "study" && a != null;
   $("#qSubject").textContent = BY_ID[q.s].name;
-  $("#qSource").textContent = `${q.e} · questão ${q.n}`;
+  const tn = topicName(q.s, q.t);
+  $("#qSource").textContent = `${q.e} · questão ${q.n}` + (tn ? ` · ${tn}` : "");
   $("#qText").textContent = q.q;
   const box = $("#alts");
   box.innerHTML = "";
@@ -416,8 +508,12 @@ function renderResult(s, correct) {
   $("#retryWrong").hidden = wrong.length === 0;
   $("#retryWrong").onclick = () => {
     session = newSession(wrong.map((q) => ({ ...q })), s.mode, s.timed, `Revisão: ${s.label}`);
+    session.cfg = s.cfg;
     saveSession();
     startQuiz();
+  };
+  $("#againBtn").onclick = () => {
+    if (s.cfg) { applyConfig(s.cfg); startNew(); } else goHome();
   };
   renderReview(s);
   $("#onlyWrong").onchange = () => renderReview(s);
@@ -444,7 +540,8 @@ function renderReview(s) {
     body.className = "body";
     const src = document.createElement("p");
     src.className = "muted small";
-    src.textContent = `${q.e} · questão ${q.n} · sua resposta: ${a == null ? "em branco" : LETTERS[a]} · gabarito: ${LETTERS[q.r]}`;
+    const tn = topicName(q.s, q.t);
+    src.textContent = `${q.e} · questão ${q.n}${tn ? ` · ${tn}` : ""} · sua resposta: ${a == null ? "em branco" : LETTERS[a]} · gabarito: ${LETTERS[q.r]}`;
     const txt = document.createElement("div");
     txt.className = "qtext"; txt.textContent = q.q;
     const alts = document.createElement("div");
@@ -518,20 +615,9 @@ async function init() {
 
   for (const b of $$(".preset")) b.addEventListener("click", () => applyPreset(b.dataset.preset));
   for (const el of ["#qty", "#period", "#timed"]) $(el).addEventListener("change", updatePlan);
-  $("#startBtn").addEventListener("click", async () => {
-    const btn = $("#startBtn");
-    btn.disabled = true; btn.textContent = "Carregando…";
-    try {
-      session = await buildSession();
-      if (session.items.length < settings().qty) toast(`Só havia ${session.items.length} questões disponíveis com esse filtro.`);
-      saveSession();
-      startQuiz();
-    } catch (e) {
-      toast(e.message || "Erro ao montar o simulado.");
-    } finally {
-      btn.textContent = "Iniciar simulado"; updatePlan();
-    }
-  });
+  for (const el of ["#rec", "#fresh"]) $(el).addEventListener("change", updatePlan);
+  $("#startBtn").addEventListener("click", startNew);
+  $("#pdfBtn").addEventListener("click", downloadPdf);
   $("#resumeBtn").addEventListener("click", () => {
     session = store.get("oab.session", null);
     if (session) startQuiz();

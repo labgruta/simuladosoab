@@ -2,15 +2,19 @@
 
 Simulador online da 1ª fase do Exame de Ordem, com 3.665 questões oficiais de 46 provas (Exame 2010.2 ao 47º) separadas por matéria.
 
-- Escolha até 3 matérias, ou use os botões de grupo (Estatuto da OAB e Código de Ética, mais recorrentes, recorrência média, menos recorrentes).
+- Escolha até 3 matérias, ou use os botões de grupo: todas as matérias (prova completa na proporção da OAB), Estatuto da OAB e Código de Ética, mais recorrentes, recorrência média, menos recorrentes.
+- Opção "só temas mais recorrentes": usa apenas questões dos assuntos que mais caíram em cada matéria.
+- Cada clique em "Sortear simulado" monta uma prova nova, evitando repetir questões de sorteios recentes.
+- "Baixar prova em PDF": sorteia uma prova e baixa o PDF com o gabarito na última página (jsPDF, carregado do cdnjs só nessa hora).
 - Modo prova (gabarito no final) ou modo estudo (resposta a cada questão), cronômetro opcional no ritmo da OAB.
-- Correção com desempenho por matéria, histórico e opção de refazer as questões erradas.
+- Correção com desempenho por matéria, histórico, "sortear outro simulado" com a mesma configuração e opção de refazer as questões erradas.
 
 ## Estrutura
 
 - `index.html`, `style.css`, `app.js`: o app (HTML/CSS/JS puro, sem build).
-- `q-<materia>.json`: questões de cada matéria (`q` enunciado, `a` alternativas, `r` índice da correta, `e` exame, `n` número da questão no caderno tipo 1).
-- `meta.json`: total de questões por matéria.
+- `pdf.js`: geração da prova em PDF.
+- `q-<materia>.json`: questões de cada matéria (`q` enunciado, `a` alternativas, `r` índice da correta, `e` exame, `n` número da questão no caderno tipo 1, `t` tema).
+- `meta.json`: total de questões por matéria e temas de cada matéria (com os mais recorrentes marcados).
 - `wrangler.jsonc`: configuração do Cloudflare Workers (arquivos estáticos). O deploy roda `npx wrangler deploy`.
 - `ferramentas/`: scripts que geram o banco de questões a partir dos PDFs da OAB (não são publicados). Veja `ferramentas/README.md`.
 
