@@ -10,6 +10,9 @@ from temas import atribuir_temas, resumo_de_temas
 
 ILEGIVEIS = re.compile(r"[\x00-\x08\x0b-\x1fϢ-Ͽ]")  # restos de fonte sem mapa de caracteres
 FIM_DA_PROVA = re.compile(r"\s*(QUESTIONÁRIO DE PERCEPÇÃO|Questionário de percepção|CRONOGRAMA OPERACIONAL).*$", re.S)
+# Rodapés que grudam no fim da última alternativa da coluna (VII, VIII e 2010.2)
+RODAPE = re.compile(r"\s*(?:[IVXL]+ EXAME DE ORDEM UNIFICADO\s*[–-]\s*TIPO 0?1\s*[–-]\s*BRANC[AO]"
+                    r"|Caderno de Prova 0?1(?:\s*[–-]\s*\d{1,3}\s*[–-])?|[–-]\s*\d{1,3}\s*[–-])\s*$")
 
 
 def _romano(n):
@@ -35,6 +38,7 @@ def limpar(texto, exame):
         texto = re.sub(r"(\w)t i(\w)", r"\1ti\2", texto)
         texto = re.sub(r"(\w)t ni (\w)", r"\1tin\2", texto)
     texto = FIM_DA_PROVA.sub("", texto)  # questionário de percepção grudado na última questão
+    texto = RODAPE.sub("", texto)
     texto = ILEGIVEIS.sub("", texto)
     texto = re.sub(r"[ \t]+", " ", texto)
     texto = re.sub(r" *\n *", "\n", texto)
