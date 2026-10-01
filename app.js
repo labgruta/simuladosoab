@@ -102,7 +102,7 @@ async function loadSubject(id) {
 // ---------- tema ----------
 // Fontes embarcadas (fonts/) e esquemas de cor (style.css). "oab" e "auto" são o padrão.
 const FONTS = [
-  { id: "oab", name: "Fonte OAB", family: '"Fonte OAB", Calibri, sans-serif' },
+  { id: "oab", name: "Fonte OAB", note: "fonte das provas", family: '"Fonte OAB", Calibri, sans-serif' },
   { id: "iawriter", name: "iA Writer Duo", family: '"iA Writer Duo S", monospace' },
   { id: "atkinson", name: "Atkinson Hyperlegible", family: '"Atkinson Hyperlegible", sans-serif' },
   { id: "lexend", name: "Lexend", family: '"Lexend", sans-serif' },
@@ -139,18 +139,21 @@ function paintAppearance() {
   for (const b of $$(".ap-color")) b.setAttribute("aria-checked", String(b.dataset.id === t));
   $("#apCur").textContent = `${FONTS.find((x) => x.id === f).name} · ${THEMES.find((x) => x.id === t).name}`;
 }
-function initAppearance() {
-  const fbox = $("#apFonts");
+function renderAppearanceOptions(fbox, cbox) {
   for (const f of FONTS) {
     const b = document.createElement("button");
     b.type = "button"; b.className = "ap-font"; b.dataset.id = f.id; b.setAttribute("role", "radio");
     b.innerHTML = `<span class="aa">Aa Çç</span><span class="nm"></span>`;
-    b.querySelector(".aa").style.fontFamily = f.family; // amostra só baixa a fonte quando o painel abre
+    b.querySelector(".aa").style.fontFamily = f.family; // a amostra só baixa a fonte quando aparece na tela
     b.querySelector(".nm").textContent = f.name;
+    if (f.note) {
+      const nt = document.createElement("span");
+      nt.className = "nt"; nt.textContent = f.note;
+      b.appendChild(nt);
+    }
     b.addEventListener("click", () => setFont(f.id));
     fbox.appendChild(b);
   }
-  const cbox = $("#apColors");
   for (const t of THEMES) {
     const b = document.createElement("button");
     b.type = "button"; b.className = "ap-color"; b.dataset.id = t.id; b.setAttribute("role", "radio");
@@ -161,12 +164,58 @@ function initAppearance() {
     b.addEventListener("click", () => setTheme(t.id));
     cbox.appendChild(b);
   }
-  // botão rápido do cabeçalho: alterna entre claro e escuro
-  $("#themeBtn").addEventListener("click", () => {
-    const dark = getComputedStyle(document.documentElement).colorScheme.includes("dark");
-    setTheme(dark ? "light" : "dark");
+}
+// Menu de formatação do cabeçalho: disponível em todas as telas, inclusive durante o simulado.
+function toggleFmtMenu(open) {
+  const menu = $("#fmtMenu"), btn = $("#fmtBtn");
+  const show = open ?? menu.hidden;
+  menu.hidden = !show;
+  btn.setAttribute("aria-expanded", String(show));
+  if (show) (menu.querySelector('[aria-checked="true"]') || menu.querySelector("button"))?.focus();
+}
+function initAppearance() {
+  renderAppearanceOptions($("#apFonts"), $("#apColors"));
+  renderAppearanceOptions($("#fmtMenu .ap-fonts"), $("#fmtMenu .ap-colors"));
+  $("#fmtBtn").addEventListener("click", (e) => { e.stopPropagation(); toggleFmtMenu(); });
+  document.addEventListener("click", (e) => {
+    if (!$("#fmtMenu").hidden && !e.target.closest(".fmt")) toggleFmtMenu(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("#fmtMenu").hidden) { toggleFmtMenu(false); $("#fmtBtn").focus(); }
   });
   paintAppearance();
+}
+
+// ---------- PDF: diagramação ----------
+const PDF_PADRAO = { modo: "prova", colunas: 2, tamanho: 10 };
+function pdfLayout() { return { ...PDF_PADRAO, ...store.get("oab.pdf", {}) }; }
+function paintPdfOptions() {
+  const l = pdfLayout();
+  const radio = $(`input[name=pdfModo][value=${l.modo}]`);
+  if (radio) radio.checked = true;
+  $("#pdfCols").value = String(l.colunas);
+  $("#pdfSize").value = String(l.tamanho);
+  $("#pdfPers").hidden = l.modo !== "personalizado";
+  $("#pdfResumo").textContent = l.modo === "personalizado"
+    ? `personalizado, ${l.colunas} coluna${l.colunas > 1 ? "s" : ""}, letra ${l.tamanho}, Fonte OAB, preto no branco`
+    : "igual à prova da OAB, Fonte OAB, preto no branco";
+}
+function initPdfOptions() {
+  const salvar = () => {
+    store.set("oab.pdf", {
+      modo: $("input[name=pdfModo]:checked").value,
+      colunas: parseInt($("#pdfCols").value, 10),
+      tamanho: parseInt($("#pdfSize").value, 10),
+    });
+    paintPdfOptions();
+  };
+  for (const el of [...$$("input[name=pdfModo]"), $("#pdfCols"), $("#pdfSize")]) el.addEventListener("change", salvar);
+  $("#pdfInfo").addEventListener("click", () => {
+    const ap = $("#appearance");
+    ap.open = true;
+    $("#pdfOpcoes").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  paintPdfOptions();
 }
 
 // ---------- configuração ----------
@@ -364,7 +413,7 @@ async function downloadPdf() {
     const pad = (n) => String(n).padStart(2, "0");
     const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
     const rich = items.map((q) => ({ ...q, subjectName: BY_ID[q.s].name, subjectShort: BY_ID[q.s].short, topicName: topicName(q.s, q.t) }));
-    await window.SimuladoPdf.baixar(rich, { label, date: now.toLocaleDateString("pt-BR") }, `simulado-oab-${stamp}.pdf`);
+    await window.SimuladoPdf.baixar(rich, { label, date: now.toLocaleDateString("pt-BR") }, `simulado-oab-${stamp}.pdf`, pdfLayout());
     toast(`PDF com ${items.length} questões baixado. Clique de novo para sortear outra prova.`);
   } catch (e) {
     toast(e.message || "Erro ao gerar o PDF.");
@@ -657,6 +706,7 @@ function goHome() {
 // ---------- inicialização ----------
 async function init() {
   initAppearance();
+  initPdfOptions();
   try {
     const r = await fetch("meta.json");
     meta = await r.json();
@@ -700,7 +750,7 @@ async function init() {
     $("#gridBtn").textContent = g.hidden ? "Ver todas" : "Ocultar";
   });
   document.addEventListener("keydown", (e) => {
-    if ($("#view-quiz").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+    if ($("#view-quiz").hidden || !$("#fmtMenu").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName || "")) return;
     const k = e.key.toUpperCase();
     if (LETTERS.includes(k) && k.length === 1) { choose(LETTERS.indexOf(k)); e.preventDefault(); }

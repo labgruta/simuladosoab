@@ -26,7 +26,17 @@
     </button>
     <div class="top-actions">
       <span id="timer" class="timer" hidden></span>
-      <button id="themeBtn" class="icon-btn" type="button" aria-label="Alternar tema claro/escuro">◐</button>
+      <div class="fmt">
+        <button id="fmtBtn" class="icon-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="fmtMenu" aria-label="Formatação: fonte e cores" title="Formatação: fonte e cores">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17 10.5 4h1L17 17"/><path d="M7.4 12h8.2"/><path d="M3.5 21h17" stroke-width="2.6"/></svg>
+        </button>
+        <div id="fmtMenu" class="fmt-menu card" role="dialog" aria-label="Formatação" hidden>
+          <p class="ap-h">Fonte</p>
+          <div class="ap-fonts" role="radiogroup" aria-label="Fonte"></div>
+          <p class="ap-h">Cor de fundo e do texto</p>
+          <div class="ap-colors" role="radiogroup" aria-label="Cores"></div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
@@ -56,12 +66,29 @@
         <div>
           <p class="ap-h">Fonte</p>
           <div class="ap-fonts" id="apFonts" role="radiogroup" aria-label="Fonte"></div>
+          <p class="muted small ap-leg">A <strong>Fonte OAB</strong> é a fonte das provas da OAB (Calibri; em aparelhos sem ela, a Carlito, que tem exatamente as mesmas medidas).</p>
         </div>
         <div>
           <p class="ap-h">Cor de fundo e do texto</p>
           <div class="ap-colors" id="apColors" role="radiogroup" aria-label="Cores"></div>
         </div>
-        <p class="muted small">A escolha fica salva neste navegador. O PDF usa sempre a Fonte OAB, em preto sobre branco.</p>
+        <div id="pdfOpcoes">
+          <p class="ap-h">PDF da prova</p>
+          <p class="muted small ap-leg">O PDF é sempre em preto no branco, na <strong>Fonte OAB</strong>, com o mesmo espaçamento entre linhas da prova. Escolha a diagramação:</p>
+          <div class="toggles">
+            <label class="toggle"><input type="radio" name="pdfModo" value="prova" checked><span><strong>Igual à prova da OAB</strong><small>2 colunas, letra tamanho 9, numeração, fios e alinhamento como no caderno</small></span></label>
+            <label class="toggle"><input type="radio" name="pdfModo" value="personalizado"><span><strong>Personalizado (em colunas)</strong><small>Você escolhe colunas e tamanho da letra; mostra matéria e origem de cada questão</small></span></label>
+          </div>
+          <div class="grid2" id="pdfPers" hidden>
+            <label class="field"><span>Colunas</span>
+              <select id="pdfCols"><option value="1">1 coluna</option><option value="2" selected>2 colunas</option><option value="3">3 colunas</option></select>
+            </label>
+            <label class="field"><span>Tamanho da letra</span>
+              <select id="pdfSize"><option value="9">9 (como na prova)</option><option value="10" selected>10</option><option value="11">11</option><option value="12">12</option></select>
+            </label>
+          </div>
+        </div>
+        <p class="muted small">As escolhas ficam salvas neste navegador. Fonte e cores também podem ser trocadas a qualquer momento pelo ícone de formatação, no alto da tela.</p>
       </div>
     </details>
 
@@ -137,6 +164,7 @@
       <div>
         <p id="planInfo" class="muted small">Selecione ao menos uma matéria.</p>
         <p class="muted small">Cada clique sorteia um simulado novo, evitando repetir as questões dos sorteios anteriores.</p>
+        <p class="small">PDF: <span id="pdfResumo"></span> · <button id="pdfInfo" class="link-btn" type="button">alterar</button></p>
       </div>
       <div class="start-actions">
         <button id="pdfBtn" class="btn ghost big" type="button" disabled>Baixar prova em PDF</button>
