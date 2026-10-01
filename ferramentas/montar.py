@@ -35,6 +35,8 @@ def limpar(texto, exame):
              .replace("ﬁ ", "fi").replace("ﬁ", "fi").replace("ﬂ ", "fl").replace("ﬂ", "fl"))
     if exame == "2010.2":  # o "ti" desse caderno vem separado: "Const ituição"
         texto = re.sub(r"(\w)t i(\w)", r"\1ti\2", texto)
+        # também "compat ível", "t ipo", "benef ício": o espaço vem da ligadura com i/í
+        texto = re.sub(r"\b(\w*[tf]) ([iíìî])(?=\w)", r"\1\2", texto)
         texto = re.sub(r"(\w)t ni (\w)", r"\1tin\2", texto)
     texto = FIM_DA_PROVA.sub("", texto)  # questionário de percepção grudado na última questão
     texto = RODAPE.sub("", texto)
