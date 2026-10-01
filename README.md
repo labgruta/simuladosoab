@@ -35,3 +35,12 @@ Simulador online da 1ª fase do Exame de Ordem, com 3.665 questões oficiais de 
 ## Origem dos dados
 
 Cadernos de prova tipo 1 e gabaritos publicados em examedeordem.oab.org.br. Questões anuladas (pelos gabaritos definitivos e comunicados de anulação) foram removidas. A matéria de cada questão foi identificada automaticamente pela ordem dos blocos de matérias em cada prova, então pode haver pequenos desvios nas fronteiras entre matérias.
+
+## Licença
+
+O código do app e das ferramentas está sob a licença MIT (veja `LICENSE`): pode ser usado, copiado, modificado e redistribuído, desde que o aviso de copyright e a licença acompanhem as cópias.
+
+A licença MIT não cobre:
+
+- as fontes em `fonts/`, que seguem suas próprias licenças (SIL Open Font License 1.1, veja `fonts/README.md`);
+- as questões e os gabaritos (`q-*.json`, `meta.json` e `ferramentas/dados/`), que vêm dos cadernos oficiais do Exame de Ordem (OAB/FGV).
