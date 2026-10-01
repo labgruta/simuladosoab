@@ -110,9 +110,9 @@ const FONTS = [
   { id: "lora", name: "Lora", family: '"Lora", serif' },
 ];
 const THEMES = [
-  { id: "auto", name: "Automático", bg: "linear-gradient(135deg, #f6f4ef 50%, #11151b 50%)", ink: "#8a8f99" },
+  { id: "auto", name: "Automático", bg: "linear-gradient(135deg, #f6f4ef 50%, #151515 50%)", ink: "#8a8a8a" },
   { id: "light", name: "Claro", bg: "#f6f4ef", ink: "#1b2330" },
-  { id: "dark", name: "Escuro", bg: "#11151b", ink: "#e8ebf0" },
+  { id: "dark", name: "Escuro", bg: "#151515", ink: "#ebebeb" },
   { id: "sepia", name: "Sépia", bg: "#f3ead7", ink: "#3d2f1f" },
   { id: "papel", name: "Papel branco", bg: "#ffffff", ink: "#111111" },
   { id: "verde", name: "Verde suave", bg: "#e7efe2", ink: "#1d2b1a" },
