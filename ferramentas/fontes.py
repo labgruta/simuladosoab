@@ -15,8 +15,8 @@ import re
 AQUI = os.path.dirname(os.path.abspath(__file__))
 DADOS = os.path.join(AQUI, "dados")
 
-# Pasta com os PDFs. Pode ser trocada com a variável de ambiente OAB_PDFS.
-PASTA_PDFS = os.path.expanduser(os.environ.get("OAB_PDFS", "~/Downloads"))
+# Pasta com os PDFs (inclusive subpastas), onde baixar.py os grava. Pode ser trocada com OAB_PDFS.
+PASTA_PDFS = os.path.expanduser(os.environ.get("OAB_PDFS", "~/Downloads/Provas OAB"))
 
 # Questões anuladas (numeração do caderno tipo 1), tiradas dos comunicados de anulação.
 # Anulações que valeram só para reaplicações locais (Ipatinga/IX, Salvador/XX) não entram.
@@ -32,10 +32,16 @@ ANULADAS = {
 }
 
 
+# Cadernos lidos por palavras em vez de caractere a caractere (ver extrair.linhas_por_palavras).
+EXTRAIR_POR_PALAVRAS = {"2010.2"}
+
+
 def _com_nome_padrao(padrao):
     achados = {}
-    for f in glob.glob(os.path.join(PASTA_PDFS, padrao)):
-        achados[re.match(r"OAB (\S+) -", os.path.basename(f)).group(1)] = os.path.basename(f)
+    for f in glob.glob(os.path.join(PASTA_PDFS, "**", padrao), recursive=True):
+        if os.sep + "Anulações" + os.sep in f:  # comunicados ("Gabarito retificado (data)") não são gabaritos
+            continue
+        achados[re.match(r"OAB (\S+) -", os.path.basename(f)).group(1)] = os.path.relpath(f, PASTA_PDFS)
     return achados
 
 

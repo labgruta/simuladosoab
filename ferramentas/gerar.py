@@ -2,6 +2,7 @@
 
     python3 ferramentas/gerar.py              # usa dados/ e lê só os PDFs de exames novos
     python3 ferramentas/gerar.py --reextrair  # relê todos os PDFs presentes na pasta
+    python3 ferramentas/gerar.py --reextrair 2010.2 38   # relê só esses exames
 
 As questões extraídas e os gabaritos já processados ficam versionados em ferramentas/dados/
 (brutas.json e gabaritos.json), então nenhum PDF antigo é necessário. Um PDF só é lido quando
@@ -39,20 +40,21 @@ def _gravar(caminho, dados):
 
 def main():
     reextrair = "--reextrair" in sys.argv
+    so = {a for a in sys.argv[1:] if not a.startswith("--")}  # exames específicos para reextrair
     brutas, gabaritos = _ler(BRUTAS), _ler(GABARITOS)
     print(f"Dados versionados: {len(brutas)} provas. PDFs procurados em {fontes.PASTA_PDFS}")
 
-    cadernos = {ex: a for ex, a in fontes.cadernos().items() if reextrair or ex not in brutas}
+    cadernos = {ex: a for ex, a in fontes.cadernos().items() if (reextrair and (not so or ex in so)) or ex not in brutas}
     if cadernos:
         from extrair import extrair_caderno  # só precisa do PyMuPDF quando há PDF para ler
         for exame, arquivo in sorted(cadernos.items()):
-            qs = extrair_caderno(fontes.caminho(arquivo))
+            qs = extrair_caderno(fontes.caminho(arquivo), palavras=exame in fontes.EXTRAIR_POR_PALAVRAS)
             problemas = [q["n"] for q in qs if len(q["alts"]) != 4 or not q["stem"]]
             print(f"  caderno {exame}: {len(qs)} questões" + (f"  problemas: {problemas}" if problemas else ""))
             brutas[exame] = qs
         _gravar(BRUTAS, brutas)
 
-    arquivos_gab = {ex: a for ex, a in fontes.gabaritos().items() if reextrair or ex not in gabaritos}
+    arquivos_gab = {ex: a for ex, a in fontes.gabaritos().items() if (reextrair and (not so or ex in so)) or ex not in gabaritos}
     if arquivos_gab:
         from gabaritos import gabarito_do_pdf
         for exame in sorted(arquivos_gab):

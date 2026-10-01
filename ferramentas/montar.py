@@ -8,10 +8,13 @@ import fontes
 from temas import atribuir_temas, resumo_de_temas
 
 ILEGIVEIS = re.compile(r"[\x00-\x08\x0b-\x1fϢ-Ͽ]")  # restos de fonte sem mapa de caracteres
-FIM_DA_PROVA = re.compile(r"\s*(QUESTIONÁRIO DE PERCEPÇÃO|Questionário de percepção|CRONOGRAMA OPERACIONAL).*$", re.S)
-# Rodapés que grudam no fim da última alternativa da coluna (VII, VIII e 2010.2)
+FIM_DA_PROVA = re.compile(r"\s*(QUESTIONÁRIO DE PERCEPÇÃO|Questionário de percepção|CRONOGRAMA OPERACIONAL|CRONOGRAMA\b).*$", re.S)
+# Rodapés que grudam no fim da última alternativa da coluna (VII, VIII, 2010.2; "XV E"/"XVI E" no XV e XVI,
+# onde o rodapé vem partido em pedaços)
 RODAPE = re.compile(r"\s*(?:[IVXL]+ EXAME DE ORDEM UNIFICADO\s*[–-]\s*TIPO 0?1\s*[–-]\s*BRANC[AO]"
-                    r"|Caderno de Prova 0?1(?:\s*[–-]\s*\d{1,3}\s*[–-])?|[–-]\s*\d{1,3}\s*[–-])\s*$")
+                    r"|Caderno de Prova 0?1(?:\s*[–-]\s*\d{1,3}\s*[–-])?|[–-]\s*\d{1,3}\s*[–-]|[IVXL]{2,5} E)\s*$")
+# número de página solto depois do ponto final da última alternativa da página (XXXV, XXXVIII)
+PAGINA_SOLTA = re.compile(r"([.;:)!?”\"])\s+\d{1,3}$")
 
 
 def _romano(n):
@@ -33,16 +36,15 @@ def nome_do_exame(exame):
 def limpar(texto, exame):
     texto = (texto.replace("", " ").replace("‐", "-")
              .replace("ﬁ ", "fi").replace("ﬁ", "fi").replace("ﬂ ", "fl").replace("ﬂ", "fl"))
-    if exame == "2010.2":  # o "ti" desse caderno vem separado: "Const ituição"
-        texto = re.sub(r"(\w)t i(\w)", r"\1ti\2", texto)
-        # também "compat ível", "t ipo", "benef ício": o espaço vem da ligadura com i/í
-        texto = re.sub(r"\b(\w*[tf]) ([iíìî])(?=\w)", r"\1\2", texto)
-        texto = re.sub(r"(\w)t ni (\w)", r"\1tin\2", texto)
+    if exame == "2010.2":  # lido por palavras; a ligadura "ti" deixa um espaço depois: "Consti tuição", "ti po"
+        texto = re.sub(r"ti (?=[a-zà-úç])", "ti", texto)
+        texto = re.sub(r"(?<=[tf])í (?=[a-zà-úç])", "í", texto)  # "ofí cio", "tí tulo"
     texto = FIM_DA_PROVA.sub("", texto)  # questionário de percepção grudado na última questão
     # palavra composta partida na quebra de linha: "sexta- feira" -> "sexta-feira" (preserva "pré- e pós-")
     texto = re.sub(r"(\w)- (?!(?:e|ou|a|ao) )(?=[a-zà-ú])", r"\1-", texto)
     texto = RODAPE.sub("", texto)
     texto = ILEGIVEIS.sub("", texto)
+    texto = PAGINA_SOLTA.sub(r"\1", texto.rstrip())  # depois do ILEGIVEIS: no XXXV o número vem com lixo ("1ϲ")
     texto = re.sub(r"[ \t]+", " ", texto)
     texto = re.sub(r" *\n *", "\n", texto)
     return texto.strip()
@@ -53,9 +55,22 @@ def _correcoes_pontuais(exame, n, enunciado, alts):
     if exame == "35" and n == 77 and "D" not in alts:
         # a letra D saiu ilegível e grudou na C
         alts["C"], alts["D"] = re.split(r"\s*\x18\)\x03\s*", alts["C"], maxsplit=1)
+    # páginas do XXXV sem texto no PDF (lidas por OCR), conferidas com a imagem da página
+    if exame == "35" and n == 58 and enunciado.find("qualquer natureza\n") > 0:
+        enunciado = enunciado.replace("qualquer natureza\n", "qualquer natureza para tipificação do delito.\n")
+    if exame == "35" and n == 74:
+        alts["D"] = re.sub(r"\s*L' FGV\s*$", "", alts["D"])  # logotipo do rodapé
     if exame == "2010.2" and n == 1:
-        # instruções da capa antes da primeira questão
+        # instruções da capa misturadas à primeira questão
         enunciado = re.sub(r"^.*?\b01 A\d{5}\s*", "", enunciado, flags=re.S)
+        i = enunciado.find("O Congresso Nacional")
+        if i > 0:
+            enunciado = enunciado[i:]
+    if exame == "2010.2" and n == 2:
+        # quadro de siglas da página seguinte ("... da seguinte forma: CP = Código Penal; ...")
+        alts["D"] = re.sub(r"\s*forma: CP = .*$", "", alts["D"], flags=re.S)
+    if exame == "2010.2" and n == 46:
+        alts = {k: v.replace("variandi i ", "variandi ") for k, v in alts.items()}  # glifo repetido no PDF
     return enunciado, alts
 
 

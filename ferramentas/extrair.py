@@ -80,8 +80,35 @@ def linhas_da_pagina(pg, pno):
     return sorted(saida)
 
 
-def linhas_do_pdf(caminho):
+def linhas_por_palavras(pg):
+    """Linhas montadas a partir das palavras (get_text("words")). Usado no 2010.2, cuja ligadura "ti"
+    sai fora de ordem caractere a caractere ("Const ti uição"), mas certa na leitura por palavras."""
+    largura, altura = pg.rect.width, pg.rect.height
+    meio = largura / 2
+    linhas = defaultdict(list)
+    for p in pg.get_text("words"):
+        x0, y0, x1, y1, palavra = p[:5]
+        col = 0 if x0 < meio - 5 else 1
+        chave = next((k for k in linhas if k[0] == col and abs(k[1] - y1) <= 2.5), (col, round(y1)))
+        linhas[chave].append((x0, palavra))
+    saida = []
+    for (col, base), ws in linhas.items():
+        t = " ".join(w for _, w in sorted(ws))
+        if CABECALHO.search(t) and (base < altura * 0.1 or base > altura * 0.9):
+            continue
+        if re.fullmatch(r"\d{1,3}", t) and base > altura * 0.9:
+            continue
+        # rodapé do 2010.2: "Caderno de Prova 01" e "– 3 –"
+        if re.search(r"Caderno de Prova 0?1|^[–-]?\s*\d{0,3}\s*[–-]$", t) and base > altura * 0.9:
+            continue
+        saida.append((col, base, min(x for x, _ in ws), t))
+    return sorted(saida)
+
+
+def linhas_do_pdf(caminho, palavras=False):
     doc = pymupdf.open(caminho)
+    if palavras:
+        return [(pno,) + l for pno, pg in enumerate(doc) for l in linhas_por_palavras(pg)]
     return [(pno,) + l for pno, pg in enumerate(doc) for l in linhas_da_pagina(pg, pno)]
 
 
@@ -100,10 +127,10 @@ def _juntar(linhas):
     return out.strip()
 
 
-def extrair_caderno(caminho):
+def extrair_caderno(caminho, palavras=False):
     """Lista de questões {n, stem, alts{A..D}, star} na ordem do caderno."""
     questoes, atual, esperado, anterior = {}, None, 1, None
-    for pno, col, y, x, t in linhas_do_pdf(caminho):
+    for pno, col, y, x, t in linhas_do_pdf(caminho, palavras):
         m = ROTULO.match(t)
         if m and int(m.group(1)) == esperado:
             atual = {"n": esperado, "stem": [], "alts": {}, "last": None, "star": "*" in t}
