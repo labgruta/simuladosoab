@@ -12,7 +12,7 @@
     var t = JSON.parse(localStorage.getItem("oab.theme") || "null");
     var f = JSON.parse(localStorage.getItem("oab.font") || "null");
     if (t && t !== "auto") document.documentElement.dataset.theme = t;
-    if (f && f !== "sistema") document.documentElement.dataset.font = f;
+    if (f && f !== "oab" && f !== "sistema") document.documentElement.dataset.font = f; // "sistema" saiu: cai na Fonte OAB
   } catch (e) {}
 </script>
 <link rel="stylesheet" href="style.css">

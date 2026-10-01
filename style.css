@@ -1,4 +1,10 @@
 /* ---------- fontes embarcadas (licenças em fonts/) ---------- */
+/* Fonte OAB: a Calibri dos cadernos de prova quando o aparelho a tem; senão, a Carlito
+   (mesmas medidas da Calibri), embarcada como subconjunto latino com o nome "Fonte OAB". */
+@font-face { font-family: "Fonte OAB"; src: local("Calibri"), url("fonts/FonteOAB-Regular.woff2") format("woff2"), url("fonts/FonteOAB-Regular.woff") format("woff"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Fonte OAB"; src: local("Calibri Bold"), local("Calibri-Bold"), url("fonts/FonteOAB-Bold.woff2") format("woff2"), url("fonts/FonteOAB-Bold.woff") format("woff"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Fonte OAB"; src: local("Calibri Italic"), local("Calibri-Italic"), url("fonts/FonteOAB-Italic.woff2") format("woff2"), url("fonts/FonteOAB-Italic.woff") format("woff"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Fonte OAB"; src: local("Calibri Bold Italic"), local("Calibri-BoldItalic"), url("fonts/FonteOAB-BoldItalic.woff2") format("woff2"), url("fonts/FonteOAB-BoldItalic.woff") format("woff"); font-weight: 700; font-style: italic; font-display: swap; }
 @font-face { font-family: "iA Writer Duo S"; src: url("fonts/iAWriterDuoS-Regular.woff2") format("woff2"), url("fonts/iAWriterDuoS-Regular.woff") format("woff"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "iA Writer Duo S"; src: url("fonts/iAWriterDuoS-Bold.woff2") format("woff2"), url("fonts/iAWriterDuoS-Bold.woff") format("woff"); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face { font-family: "iA Writer Duo S"; src: url("fonts/iAWriterDuoS-Italic.woff2") format("woff2"), url("fonts/iAWriterDuoS-Italic.woff") format("woff"); font-weight: 400; font-style: italic; font-display: swap; }
@@ -12,8 +18,8 @@
 
 :root {
   --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font: var(--font-system);
-  --fs: 16px;
+  --font: "Fonte OAB", Calibri, var(--font-system); /* padrão: Fonte OAB */
+  --fs: 17px;
 }
 :root[data-font="iawriter"] { --font: "iA Writer Duo S", ui-monospace, Menlo, monospace; --fs: 15px; }
 :root[data-font="atkinson"] { --font: "Atkinson Hyperlegible", var(--font-system); --fs: 16.5px; }

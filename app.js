@@ -100,9 +100,9 @@ async function loadSubject(id) {
 }
 
 // ---------- tema ----------
-// Fontes embarcadas (fonts/) e esquemas de cor (style.css). "sistema" e "auto" são o padrão.
+// Fontes embarcadas (fonts/) e esquemas de cor (style.css). "oab" e "auto" são o padrão.
 const FONTS = [
-  { id: "sistema", name: "Padrão do sistema", family: "var(--font-system)" },
+  { id: "oab", name: "Fonte OAB", family: '"Fonte OAB", Calibri, sans-serif' },
   { id: "iawriter", name: "iA Writer Duo", family: '"iA Writer Duo S", monospace' },
   { id: "atkinson", name: "Atkinson Hyperlegible", family: '"Atkinson Hyperlegible", sans-serif' },
   { id: "lexend", name: "Lexend", family: '"Lexend", sans-serif' },
@@ -119,10 +119,10 @@ const THEMES = [
   { id: "noite", name: "Azul-noite", bg: "#0e1726", ink: "#dbe5f3" },
   { id: "contraste", name: "Alto contraste", bg: "#000000", ink: "#ffffff" },
 ];
-function currentFont() { return document.documentElement.dataset.font || "sistema"; }
+function currentFont() { return document.documentElement.dataset.font || "oab"; }
 function currentTheme() { return document.documentElement.dataset.theme || "auto"; }
 function setFont(id) {
-  if (id === "sistema") delete document.documentElement.dataset.font;
+  if (id === "oab") delete document.documentElement.dataset.font;
   else document.documentElement.dataset.font = id;
   store.set("oab.font", id);
   paintAppearance();
