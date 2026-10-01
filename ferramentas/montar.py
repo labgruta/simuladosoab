@@ -39,6 +39,8 @@ def limpar(texto, exame):
         texto = re.sub(r"\b(\w*[tf]) ([iíìî])(?=\w)", r"\1\2", texto)
         texto = re.sub(r"(\w)t ni (\w)", r"\1tin\2", texto)
     texto = FIM_DA_PROVA.sub("", texto)  # questionário de percepção grudado na última questão
+    # palavra composta partida na quebra de linha: "sexta- feira" -> "sexta-feira" (preserva "pré- e pós-")
+    texto = re.sub(r"(\w)- (?!(?:e|ou|a|ao) )(?=[a-zà-ú])", r"\1-", texto)
     texto = RODAPE.sub("", texto)
     texto = ILEGIVEIS.sub("", texto)
     texto = re.sub(r"[ \t]+", " ", texto)
