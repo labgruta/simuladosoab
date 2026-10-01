@@ -1,6 +1,16 @@
-wrangler.jsonc
-README.md
-.assetsignore
-.gitignore
-.git
-ferramentas
+# Lista do que é publicado pelo Cloudflare: tudo fica de fora, menos o que está liberado
+# abaixo com "!". Assim, nada que for parar nesta pasta por engano (.env, PDFs, rascunhos)
+# vai ao ar. Arquivo novo do site precisa ser liberado aqui. O _headers é lido mesmo assim.
+*
+!/index.html
+!/privacidade.html
+!/404.html
+!/style.css
+!/tema.js
+!/app.js
+!/pdf.js
+!/privacidade.js
+!/meta.json
+!/q-*.json
+!/fonts/
+!/fonts/*

@@ -1,0 +1,14 @@
+# Cabeçalhos de segurança de todas as páginas e arquivos. O Cloudflare lê este arquivo e não o publica.
+#
+# CSP: scripts só do próprio site e do jsPDF no cdnjs (carregado ao baixar o PDF; se mudar a versão,
+# a pasta continua liberada, só o hash SRI em pdf.js precisa mudar). Estilos inline ficam liberados
+# de propósito: ferramentas de acessibilidade (extensões e bookmarklets de espaçamento, contraste,
+# fonte para dislexia) costumam injetar <style> ou style="" na página, e bloqueá-las não traria
+# ganho real, já que o app não monta HTML com conteúdo variável.
+# Permissions-Policy não bloqueia o microfone, para não atrapalhar ferramentas de comando de voz.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com/ajax/libs/jspdf/; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), geolocation=(), payment=(), usb=()

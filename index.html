@@ -6,15 +6,7 @@
 <title>Simulados OAB</title>
 <meta name="description" content="Simulador da 1ª fase da OAB com questões oficiais de 46 provas, filtradas por matéria.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3a5f'/%3E%3Cpath d='M16 6v20M9 11h14M9 11l-3 7h6zM23 11l-3 7h6z' stroke='%23f2c14e' stroke-width='2' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
-<script>
-  // aplica fonte e cores salvas antes de desenhar a página
-  try {
-    var t = JSON.parse(localStorage.getItem("oab.theme") || "null");
-    var f = JSON.parse(localStorage.getItem("oab.font") || "null");
-    if (t && t !== "auto") document.documentElement.dataset.theme = t;
-    if (f && f !== "oab" && f !== "sistema") document.documentElement.dataset.font = f; // "sistema" saiu: cai na Fonte OAB
-  } catch (e) {}
-</script>
+<script src="tema.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -180,10 +172,13 @@
       <ul id="history" class="history"></ul>
     </div>
 
-    <p class="foot muted small">
-      Questões dos cadernos oficiais (tipo 1) e gabaritos da OAB/FGV, do Exame 2010.2 ao 47º. Questões anuladas foram removidas.
-      A matéria de cada questão foi identificada automaticamente pela ordem dos blocos na prova, então pode haver pequenos desvios.
-    </p>
+    <footer class="foot muted small">
+      <p>
+        Questões dos cadernos oficiais (tipo 1) e gabaritos da OAB/FGV, do Exame 2010.2 ao 47º. Questões anuladas foram removidas.
+        A matéria de cada questão foi identificada automaticamente pela ordem dos blocos na prova, então pode haver pequenos desvios.
+      </p>
+      <p><a href="privacidade">Política de privacidade</a> · Seus dados ficam só neste navegador. Sem cookies e sem rastreadores.</p>
+    </footer>
   </section>
 
   <!-- PROVA -->

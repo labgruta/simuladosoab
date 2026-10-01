@@ -1,9 +1,11 @@
 {
-  // Worker só de arquivos estáticos: o Cloudflare serve os arquivos desta pasta.
+  // Worker só de arquivos estáticos: o Cloudflare serve os arquivos desta pasta liberados no
+  // .assetsignore (lista de permissão: o que não está lá não é publicado).
   "name": "simuladosoab",
   "compatibility_date": "2026-09-01",
   "assets": {
     "directory": ".",
-    "not_found_handling": "single-page-application"
+    // Endereço inexistente responde 404 com a página 404.html.
+    "not_found_handling": "404-page"
   }
 }

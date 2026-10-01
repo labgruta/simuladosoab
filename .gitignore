@@ -1,3 +1,6 @@
 __pycache__/
 ferramentas/.venv/
 .DS_Store
+.wrangler/
+.env*
+.dev.vars*

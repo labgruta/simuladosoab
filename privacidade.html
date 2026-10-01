@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Política de privacidade · Simulados OAB</title>
+<meta name="description" content="Como o Simulados OAB trata seus dados: tudo fica guardado só no seu navegador, sem cookies e sem rastreadores.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3a5f'/%3E%3Cpath d='M16 6v20M9 11h14M9 11l-3 7h6zM23 11l-3 7h6z' stroke='%23f2c14e' stroke-width='2' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="tema.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="./">
+      <span class="logo" aria-hidden="true">⚖</span>
+      <span><strong>Simulados OAB</strong><small>1ª fase · questões oficiais</small></span>
+    </a>
+  </div>
+</header>
+
+<main class="wrap">
+  <article class="card doc">
+    <h1>Política de privacidade</h1>
+    <p class="muted small">Atualizada em <time datetime="2026-10-01">1º de outubro de 2026</time>.</p>
+
+    <div class="destaque">
+      <h2 id="resumo">Em resumo</h2>
+      <ul>
+        <li><strong>Todos os seus dados ficam guardados só no seu navegador</strong>, neste aparelho.</li>
+        <li><strong>Nada é enviado para nós.</strong> Não há cadastro, login, formulário nem banco de dados de usuários.</li>
+        <li><strong>Não usamos cookies</strong>, ferramentas de estatística de visitas, anúncios nem rastreadores.</li>
+        <li>Você pode <a href="#apagar">apagar tudo a qualquer momento</a>.</li>
+      </ul>
+    </div>
+
+    <h2 id="local">O que fica guardado no seu navegador</h2>
+    <p>
+      O Simulados OAB usa o armazenamento local do navegador (<span lang="en">localStorage</span>).
+      Ele é diferente de um cookie: fica só no seu aparelho e não é enviado ao servidor em nenhuma visita.
+      Guardamos ali:
+    </p>
+    <ul>
+      <li><strong>Aparência:</strong> a fonte e as cores que você escolheu.</li>
+      <li><strong>PDF da prova:</strong> a diagramação, o número de colunas e o tamanho da letra.</li>
+      <li><strong>Simulado em andamento:</strong> as questões sorteadas, suas respostas, as questões marcadas e o tempo, para você continuar depois.</li>
+      <li><strong>Histórico:</strong> data, matérias, acertos, modo e tempo dos últimos 30 simulados.</li>
+      <li><strong>Questões já vistas:</strong> os códigos das questões que você respondeu e das sorteadas recentemente, para evitar repetições.</li>
+    </ul>
+    <p>
+      Nenhuma dessas informações identifica você: o site não pede nome, e-mail nem qualquer outro dado pessoal.
+      Elas não são sincronizadas entre aparelhos ou navegadores, e nós não temos acesso a elas.
+    </p>
+
+    <h2 id="nao-fazemos">O que não fazemos</h2>
+    <ul>
+      <li>Não usamos cookies, nem próprios nem de terceiros.</li>
+      <li>Não usamos Google Analytics nem outras ferramentas de estatística de visitas, pixels de redes sociais, anúncios ou rastreadores.</li>
+      <li>Não vendemos nem compartilhamos dados. Não guardamos dados de usuários, então não há o que compartilhar.</li>
+    </ul>
+
+    <h2 id="hospedagem">Hospedagem e conexões</h2>
+    <ul>
+      <li>
+        O site é hospedado na Cloudflare. Como em qualquer site, ao abrir uma página o seu navegador se conecta ao servidor,
+        que recebe dados técnicos da conexão (como o endereço IP e o tipo de navegador) para entregar as páginas e proteger o
+        serviço contra ataques. O Simulados OAB não usa essas informações para identificar visitantes. A Cloudflare as trata
+        conforme a <a href="https://www.cloudflare.com/pt-br/privacypolicy/" rel="noopener">política de privacidade da Cloudflare</a>.
+      </li>
+      <li>As questões, as fontes e os demais arquivos vêm do próprio site, sem serviços de terceiros como o Google Fonts.</li>
+      <li>
+        Só quando você clica em “Baixar prova em PDF”, o navegador baixa o gerador de PDF (a biblioteca jsPDF) do cdnjs,
+        um serviço da Cloudflare, sem enviar cookies. O PDF é montado no seu próprio aparelho: as questões e as suas
+        escolhas não saem dele.
+      </li>
+    </ul>
+
+    <h2 id="apagar">Como apagar seus dados</h2>
+    <p>Como tudo fica no seu navegador, é você quem controla esses dados:</p>
+    <ul>
+      <li>O botão abaixo apaga tudo o que o Simulados OAB guardou neste navegador.</li>
+      <li>Na tela inicial, “Limpar”, em “Últimos simulados”, apaga o histórico e a lista de questões respondidas; “Descartar” apaga o simulado em andamento.</li>
+      <li>Você também pode apagar os dados do site nas configurações do navegador ou usar uma janela anônima, que apaga tudo ao ser fechada.</li>
+    </ul>
+    <p>Apagar é definitivo: como não existe cópia no servidor, não é possível recuperar os dados depois.</p>
+    <div class="acoes">
+      <button id="apagarBtn" class="btn ghost" type="button" hidden>Apagar meus dados deste navegador</button>
+      <p id="apagarMsg" class="small" role="status"></p>
+    </div>
+
+    <h2 id="direitos">Seus direitos (LGPD)</h2>
+    <p>
+      A Lei Geral de Proteção de Dados (Lei nº 13.709/2018) garante a você direitos sobre os seus dados pessoais,
+      como saber se eles são tratados, acessá-los, corrigi-los e pedir que sejam eliminados. Como o Simulados OAB não
+      coleta nem guarda dados pessoais em servidores, não há dados seus conosco: o que o site usa fica no seu
+      navegador, sob o seu controle. Se tiver qualquer dúvida, escreva para nós.
+    </p>
+
+    <h2 id="mudancas">Mudanças nesta política</h2>
+    <p>
+      Se o site passar a tratar dados de outra forma, esta página será atualizada antes da mudança, com a nova data no topo.
+    </p>
+
+    <h2 id="contato">Contato</h2>
+    <p>Dúvidas sobre esta política ou sobre privacidade: <a href="mailto:simuladosoab@proton.me">simuladosoab@proton.me</a>.</p>
+
+    <p class="acoes"><a class="btn primary" href="./">Voltar ao simulador</a></p>
+  </article>
+</main>
+<script src="privacidade.js"></script>
+</body>
+</html>
