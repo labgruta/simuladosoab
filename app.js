@@ -100,16 +100,73 @@ async function loadSubject(id) {
 }
 
 // ---------- tema ----------
-function initTheme() {
-  const saved = store.get("oab.theme", null);
-  if (saved) document.documentElement.dataset.theme = saved;
+// Fontes embarcadas (fonts/) e esquemas de cor (style.css). "sistema" e "auto" são o padrão.
+const FONTS = [
+  { id: "sistema", name: "Padrão do sistema", family: "var(--font-system)" },
+  { id: "iawriter", name: "iA Writer Duo", family: '"iA Writer Duo S", monospace' },
+  { id: "atkinson", name: "Atkinson Hyperlegible", family: '"Atkinson Hyperlegible", sans-serif' },
+  { id: "lexend", name: "Lexend", family: '"Lexend", sans-serif' },
+  { id: "literata", name: "Literata", family: '"Literata", serif' },
+  { id: "lora", name: "Lora", family: '"Lora", serif' },
+];
+const THEMES = [
+  { id: "auto", name: "Automático", bg: "linear-gradient(135deg, #f6f4ef 50%, #11151b 50%)", ink: "#8a8f99" },
+  { id: "light", name: "Claro", bg: "#f6f4ef", ink: "#1b2330" },
+  { id: "dark", name: "Escuro", bg: "#11151b", ink: "#e8ebf0" },
+  { id: "sepia", name: "Sépia", bg: "#f3ead7", ink: "#3d2f1f" },
+  { id: "papel", name: "Papel branco", bg: "#ffffff", ink: "#111111" },
+  { id: "verde", name: "Verde suave", bg: "#e7efe2", ink: "#1d2b1a" },
+  { id: "noite", name: "Azul-noite", bg: "#0e1726", ink: "#dbe5f3" },
+  { id: "contraste", name: "Alto contraste", bg: "#000000", ink: "#ffffff" },
+];
+function currentFont() { return document.documentElement.dataset.font || "sistema"; }
+function currentTheme() { return document.documentElement.dataset.theme || "auto"; }
+function setFont(id) {
+  if (id === "sistema") delete document.documentElement.dataset.font;
+  else document.documentElement.dataset.font = id;
+  store.set("oab.font", id);
+  paintAppearance();
+}
+function setTheme(id) {
+  if (id === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = id;
+  store.set("oab.theme", id);
+  paintAppearance();
+}
+function paintAppearance() {
+  const f = currentFont(), t = currentTheme();
+  for (const b of $$(".ap-font")) b.setAttribute("aria-checked", String(b.dataset.id === f));
+  for (const b of $$(".ap-color")) b.setAttribute("aria-checked", String(b.dataset.id === t));
+  $("#apCur").textContent = `${FONTS.find((x) => x.id === f).name} · ${THEMES.find((x) => x.id === t).name}`;
+}
+function initAppearance() {
+  const fbox = $("#apFonts");
+  for (const f of FONTS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "ap-font"; b.dataset.id = f.id; b.setAttribute("role", "radio");
+    b.innerHTML = `<span class="aa">Aa Çç</span><span class="nm"></span>`;
+    b.querySelector(".aa").style.fontFamily = f.family; // amostra só baixa a fonte quando o painel abre
+    b.querySelector(".nm").textContent = f.name;
+    b.addEventListener("click", () => setFont(f.id));
+    fbox.appendChild(b);
+  }
+  const cbox = $("#apColors");
+  for (const t of THEMES) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "ap-color"; b.dataset.id = t.id; b.setAttribute("role", "radio");
+    b.innerHTML = `<span class="sw">Aa</span><span class="nm"></span>`;
+    const sw = b.querySelector(".sw");
+    sw.style.background = t.bg; sw.style.color = t.ink;
+    b.querySelector(".nm").textContent = t.name;
+    b.addEventListener("click", () => setTheme(t.id));
+    cbox.appendChild(b);
+  }
+  // botão rápido do cabeçalho: alterna entre claro e escuro
   $("#themeBtn").addEventListener("click", () => {
-    const cur = document.documentElement.dataset.theme
-      || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    const next = cur === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = next;
-    store.set("oab.theme", next);
+    const dark = getComputedStyle(document.documentElement).colorScheme.includes("dark");
+    setTheme(dark ? "light" : "dark");
   });
+  paintAppearance();
 }
 
 // ---------- configuração ----------
@@ -599,7 +656,7 @@ function goHome() {
 
 // ---------- inicialização ----------
 async function init() {
-  initTheme();
+  initAppearance();
   try {
     const r = await fetch("meta.json");
     meta = await r.json();

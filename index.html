@@ -6,6 +6,15 @@
 <title>Simulados OAB</title>
 <meta name="description" content="Simulador da 1ª fase da OAB com questões oficiais de 46 provas, filtradas por matéria.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3a5f'/%3E%3Cpath d='M16 6v20M9 11h14M9 11l-3 7h6zM23 11l-3 7h6z' stroke='%23f2c14e' stroke-width='2' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script>
+  // aplica fonte e cores salvas antes de desenhar a página
+  try {
+    var t = JSON.parse(localStorage.getItem("oab.theme") || "null");
+    var f = JSON.parse(localStorage.getItem("oab.font") || "null");
+    if (t && t !== "auto") document.documentElement.dataset.theme = t;
+    if (f && f !== "sistema") document.documentElement.dataset.font = f;
+  } catch (e) {}
+</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -40,6 +49,21 @@
       <h1>Monte seu simulado</h1>
       <p class="muted" id="introStats">Carregando banco de questões…</p>
     </div>
+
+    <details class="card appearance" id="appearance">
+      <summary><strong>Aparência: fonte e cores</strong> <span class="ap-cur" id="apCur"></span></summary>
+      <div class="ap-body">
+        <div>
+          <p class="ap-h">Fonte</p>
+          <div class="ap-fonts" id="apFonts" role="radiogroup" aria-label="Fonte"></div>
+        </div>
+        <div>
+          <p class="ap-h">Cor de fundo e do texto</p>
+          <div class="ap-colors" id="apColors" role="radiogroup" aria-label="Cores"></div>
+        </div>
+        <p class="muted small">A escolha fica salva neste navegador. O PDF usa sempre uma fonte padrão, em preto sobre branco.</p>
+      </div>
+    </details>
 
     <div class="card">
       <div class="card-head">

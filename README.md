@@ -7,12 +7,14 @@ Simulador online da 1ª fase do Exame de Ordem, com 3.665 questões oficiais de 
 - Cada clique em "Sortear simulado" monta uma prova nova, evitando repetir questões de sorteios recentes.
 - "Baixar prova em PDF": sorteia uma prova e baixa o PDF com o gabarito na última página (jsPDF, carregado do cdnjs só nessa hora).
 - Modo prova (gabarito no final) ou modo estudo (resposta a cada questão), cronômetro opcional no ritmo da OAB.
+- Aparência ajustável na tela inicial: 6 fontes (sistema, iA Writer Duo, Atkinson Hyperlegible, Lexend, Literata, Lora), embarcadas em `fonts/`, e 8 combinações de cor de fundo e texto.
 - Correção com desempenho por matéria, histórico, "sortear outro simulado" com a mesma configuração e opção de refazer as questões erradas.
 
 ## Estrutura
 
 - `index.html`, `style.css`, `app.js`: o app (HTML/CSS/JS puro, sem build).
 - `pdf.js`: geração da prova em PDF.
+- `fonts/`: fontes embarcadas e suas licenças (SIL OFL 1.1). Veja `fonts/README.md`.
 - `q-<materia>.json`: questões de cada matéria (`q` enunciado, `a` alternativas, `r` índice da correta, `e` exame, `n` número da questão no caderno tipo 1, `t` tema).
 - `meta.json`: total de questões por matéria e temas de cada matéria (com os mais recorrentes marcados).
 - `wrangler.jsonc`: configuração do Cloudflare Workers (arquivos estáticos). O deploy roda `npx wrangler deploy`.

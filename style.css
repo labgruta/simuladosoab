@@ -1,3 +1,27 @@
+/* ---------- fontes embarcadas (licenças em fonts/) ---------- */
+@font-face { font-family: "iA Writer Duo S"; src: url("fonts/iAWriterDuoS-Regular.woff2") format("woff2"), url("fonts/iAWriterDuoS-Regular.woff") format("woff"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "iA Writer Duo S"; src: url("fonts/iAWriterDuoS-Bold.woff2") format("woff2"), url("fonts/iAWriterDuoS-Bold.woff") format("woff"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "iA Writer Duo S"; src: url("fonts/iAWriterDuoS-Italic.woff2") format("woff2"), url("fonts/iAWriterDuoS-Italic.woff") format("woff"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "iA Writer Duo S"; src: url("fonts/iAWriterDuoS-BoldItalic.woff2") format("woff2"), url("fonts/iAWriterDuoS-BoldItalic.woff") format("woff"); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("fonts/AtkinsonHyperlegible-Regular.woff2") format("woff2"), url("fonts/AtkinsonHyperlegible-Regular.woff") format("woff"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("fonts/AtkinsonHyperlegible-Bold.woff2") format("woff2"), url("fonts/AtkinsonHyperlegible-Bold.woff") format("woff"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Lexend"; src: url("fonts/Lexend-wght.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Literata"; src: url("fonts/Literata-Regular.woff2") format("woff2"), url("fonts/Literata-Regular.woff") format("woff"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Literata"; src: url("fonts/Literata-Bold.woff2") format("woff2"), url("fonts/Literata-Bold.woff") format("woff"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Lora"; src: url("fonts/Lora-wght.ttf") format("truetype"); font-weight: 400 700; font-display: swap; }
+
+:root {
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font: var(--font-system);
+  --fs: 16px;
+}
+:root[data-font="iawriter"] { --font: "iA Writer Duo S", ui-monospace, Menlo, monospace; --fs: 15px; }
+:root[data-font="atkinson"] { --font: "Atkinson Hyperlegible", var(--font-system); --fs: 16.5px; }
+:root[data-font="lexend"] { --font: "Lexend", var(--font-system); --fs: 15.5px; }
+:root[data-font="literata"] { --font: "Literata", Georgia, "Times New Roman", serif; --fs: 16.5px; }
+:root[data-font="lora"] { --font: "Lora", Georgia, "Times New Roman", serif; --fs: 16.5px; }
+
+/* ---------- cores (fundo + texto) ---------- */
 :root {
   --bg: #f6f4ef;
   --surface: #ffffff;
@@ -19,8 +43,9 @@
   --radius: 14px;
   color-scheme: light;
 }
+/* "Automático": segue o claro/escuro do sistema */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme]), :root[data-theme="auto"] {
     --bg: #11151b; --surface: #1a2029; --surface-2: #222a35; --ink: #e8ebf0; --muted: #9aa4b2;
     --line: #2d3643; --brand: #8fb4e8; --brand-ink: #0e1620; --accent: #e0b64a;
     --ok: #5cc98d; --ok-bg: #173226; --bad: #f08a80; --bad-bg: #3a1d1b; --warn: #e6b35c;
@@ -33,12 +58,42 @@
   --ok: #5cc98d; --ok-bg: #173226; --bad: #f08a80; --bad-bg: #3a1d1b; --warn: #e6b35c;
   --sel: #1f2d42; --sel-line: #8fb4e8; --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark;
 }
+:root[data-theme="sepia"] {
+  --bg: #f3ead7; --surface: #fbf5e8; --surface-2: #efe3cb; --ink: #3d2f1f; --muted: #6f5b44;
+  --line: #e0d1b3; --brand: #7a4a1c; --brand-ink: #fffaf0; --accent: #a8741a;
+  --ok: #3d6b2a; --ok-bg: #e6ecd2; --bad: #a23a22; --bad-bg: #f6dfd2; --warn: #8a5a00;
+  --sel: #f0e1c4; --sel-line: #7a4a1c; --shadow: 0 1px 2px rgba(80, 55, 20, .08); color-scheme: light;
+}
+:root[data-theme="papel"] {
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #f3f3f3; --ink: #111111; --muted: #555555;
+  --line: #dddddd; --brand: #111111; --brand-ink: #ffffff; --accent: #9a6b00;
+  --ok: #1a7a3e; --ok-bg: #e3f3e8; --bad: #b3261e; --bad-bg: #fbe6e4; --warn: #7a5000;
+  --sel: #ececec; --sel-line: #111111; --shadow: none; color-scheme: light;
+}
+:root[data-theme="verde"] {
+  --bg: #e7efe2; --surface: #f4f8f1; --surface-2: #dde8d6; --ink: #1d2b1a; --muted: #4f5f4a;
+  --line: #cddbc4; --brand: #2f5d34; --brand-ink: #ffffff; --accent: #8a6d12;
+  --ok: #23703e; --ok-bg: #d8ecd9; --bad: #a8321f; --bad-bg: #f4dcd5; --warn: #7a5300;
+  --sel: #d6e6d0; --sel-line: #2f5d34; --shadow: 0 1px 2px rgba(30, 50, 25, .08); color-scheme: light;
+}
+:root[data-theme="noite"] {
+  --bg: #0e1726; --surface: #15213a; --surface-2: #1c2b47; --ink: #dbe5f3; --muted: #93a3bb;
+  --line: #2a3a58; --brand: #7fb0ff; --brand-ink: #0b1424; --accent: #f2c14e;
+  --ok: #6fd39a; --ok-bg: #12321f; --bad: #ff8f84; --bad-bg: #3d1c1a; --warn: #f0b65a;
+  --sel: #1d3150; --sel-line: #7fb0ff; --shadow: 0 1px 2px rgba(0,0,0,.35); color-scheme: dark;
+}
+:root[data-theme="contraste"] {
+  --bg: #000000; --surface: #000000; --surface-2: #1a1a1a; --ink: #ffffff; --muted: #e6e6e6;
+  --line: #ffffff; --brand: #ffd400; --brand-ink: #000000; --accent: #ffd400;
+  --ok: #4dff88; --ok-bg: #003316; --bad: #ff6b6b; --bad-bg: #3a0000; --warn: #ffd400;
+  --sel: #262600; --sel-line: #ffd400; --shadow: none; color-scheme: dark;
+}
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
-  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: var(--fs)/1.55 var(--font);
 }
 [hidden] { display: none !important; }
 h1, h2 { line-height: 1.2; margin: 0 0 .4em; }
@@ -208,4 +263,27 @@ select { width: 100%; font: inherit; padding: 9px 10px; border-radius: 10px; bor
   .start-actions { width: 100%; flex-direction: column-reverse; }
   .start-actions .btn { width: 100%; }
   .rec-box { margin-left: 0; }
+}
+
+/* v3: aparência (fonte e cores) */
+.appearance { padding: 0; }
+.appearance > summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.appearance > summary::-webkit-details-marker { display: none; }
+.appearance > summary::after { content: "▾"; color: var(--muted); transition: transform .15s; }
+.appearance[open] > summary::after { transform: rotate(180deg); }
+.appearance .ap-cur { color: var(--muted); font-size: .85rem; font-weight: 400; }
+.appearance .ap-body { padding: 0 18px 18px; display: grid; gap: 16px; }
+.ap-h { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
+.ap-fonts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ap-font { font: inherit; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+.ap-font .aa { display: block; font-size: 1.35rem; line-height: 1.2; }
+.ap-font .nm { display: block; font-size: .8rem; color: var(--muted); margin-top: 2px; }
+.ap-font[aria-checked="true"], .ap-color[aria-checked="true"] { border-color: var(--sel-line); box-shadow: inset 0 0 0 2px var(--sel-line); }
+.ap-colors { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ap-color { font: inherit; border: 1px solid var(--line); border-radius: 12px; padding: 0; cursor: pointer; overflow: hidden; background: none; color: var(--ink); text-align: left; }
+.ap-color .sw { display: flex; align-items: center; justify-content: center; height: 46px; font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--line); }
+.ap-color .nm { display: block; padding: 6px 10px; font-size: .8rem; }
+@media (max-width: 640px) {
+  .ap-fonts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ap-colors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
