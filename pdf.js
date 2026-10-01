@@ -1,5 +1,6 @@
 "use strict";
-// Gera a prova em PDF (questões + gabarito no final) com jsPDF.
+// Gera a prova em PDF (questões + gabarito no final) com jsPDF, na Fonte OAB (a mesma do app,
+// com as medidas da Calibri dos cadernos). Se a fonte não carregar, usa Helvetica.
 // Funciona no navegador (window.SimuladoPdf) e no Node (module.exports), para testes.
 (function (root) {
   const JSPDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js";
@@ -7,24 +8,40 @@
 
   const PAGE_W = 210, PAGE_H = 297, M = 18, W = PAGE_W - 2 * M;
   const BODY = 10, LINE = 4.6; // pt, mm
+  const FONTE_OAB = { normal: "fonts/FonteOAB-Regular.ttf", bold: "fonts/FonteOAB-Bold.ttf" };
   const INK = [27, 35, 48], MUTED = [93, 102, 117], BRAND = [31, 58, 95], RULE = [210, 205, 195];
   const LETTERS = "ABCD";
 
-  // As fontes padrão do PDF só cobrem Latin-1: troca aspas curvas, travessões etc.
-  function latin1(s) {
+  // As fontes padrão do PDF (Helvetica) só cobrem Latin-1: troca aspas curvas, travessões etc.
+  function latin1Helvetica(s) {
     return s
       .replace(/[“”„]/g, '"').replace(/[‘’‚]/g, "'")
       .replace(/[–—−]/g, "-").replace(/…/g, "...").replace(/•/g, "-")
       .replace(/[^\u0000-ÿ]/g, "");
   }
 
-  function montar(jsPDF, items, info) {
+  // A Fonte OAB cobre Latin-1 e a pontuação geral (aspas curvas, travessões, reticências).
+  function oab(s) {
+    return s.replace(/[^\u0000-\u00ff\u0131\u0152\u0153\u2010-\u2027\u2030-\u205e\u20ac\u2122\u2212]/g, "");
+  }
+
+  // fonte: { normal, bold } em base64 (TTF). Sem ela, o PDF sai em Helvetica.
+  function montar(jsPDF, items, info, fonte) {
     const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
-    doc.setProperties({ title: "Simulado OAB - 1ª fase", subject: info.label, creator: "Simulados OAB" });
+    let familia = "helvetica", latin1 = latin1Helvetica, extra = 0;
+    if (fonte && fonte.normal && fonte.bold) {
+      doc.addFileToVFS("FonteOAB-Regular.ttf", fonte.normal);
+      doc.addFont("FonteOAB-Regular.ttf", "FonteOAB", "normal");
+      doc.addFileToVFS("FonteOAB-Bold.ttf", fonte.bold);
+      doc.addFont("FonteOAB-Bold.ttf", "FonteOAB", "bold");
+      familia = "FonteOAB"; latin1 = oab; extra = 0.5; // a Calibri é visualmente menor que a Helvetica
+    }
+    const titulo = familia === "FonteOAB" ? "Simulado OAB – 1ª fase" : "Simulado OAB - 1ª fase";
+    doc.setProperties({ title: titulo, subject: info.label, creator: "Simulados OAB" });
     let y = M;
 
     const color = (c) => doc.setTextColor(c[0], c[1], c[2]);
-    const font = (style, size) => { doc.setFont("helvetica", style); doc.setFontSize(size); };
+    const font = (style, size) => { doc.setFont(familia, style); doc.setFontSize(size + extra); };
     const room = (h) => { if (y + h > PAGE_H - M - 6) { doc.addPage(); y = M; return true; } return false; };
     const write = (text, x, width, style = "normal", size = BODY, c = INK, lh = LINE) => {
       font(style, size); color(c);
@@ -37,7 +54,7 @@
 
     // Cabeçalho
     font("bold", 17); color(BRAND);
-    doc.text("Simulado OAB - 1ª fase", M, y + 6);
+    doc.text(titulo, M, y + 6);
     y += 10;
     write(`${items.length} questões · ${info.label}`, M, W, "normal", 10.5, INK, 5);
     write(`Gerado em ${info.date} · questões oficiais do Exame de Ordem Unificado (OAB/FGV), sem as anuladas. Gabarito na última página.`,
@@ -121,12 +138,34 @@
     });
   }
 
-  async function baixar(items, info, filename) {
-    const jsPDF = await carregarJsPdf();
-    montar(jsPDF, items, info).save(filename);
+  let fonteCache = null;
+  async function carregarFonte() {
+    if (fonteCache) return fonteCache;
+    const base64 = (buf) => {
+      const bytes = new Uint8Array(buf);
+      let bin = "";
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      return btoa(bin);
+    };
+    const ler = async (url) => {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`${url}: ${r.status}`);
+      return base64(await r.arrayBuffer());
+    };
+    const [normal, bold] = await Promise.all([ler(FONTE_OAB.normal), ler(FONTE_OAB.bold)]);
+    fonteCache = { normal, bold };
+    return fonteCache;
   }
 
-  const api = { montar, baixar, latin1 };
+  async function baixar(items, info, filename) {
+    const [jsPDF, fonte] = await Promise.all([
+      carregarJsPdf(),
+      carregarFonte().catch((e) => { console.warn("Fonte OAB indisponível no PDF; usando Helvetica.", e); return null; }),
+    ]);
+    montar(jsPDF, items, info, fonte).save(filename);
+  }
+
+  const api = { montar, baixar, latin1: latin1Helvetica, oab };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.SimuladoPdf = api;
 })(typeof window !== "undefined" ? window : globalThis);
