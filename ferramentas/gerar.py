@@ -1,10 +1,12 @@
-"""Gera o banco de questões do app a partir dos PDFs da OAB.
+"""Gera o banco de questões do app.
 
-    python3 ferramentas/gerar.py              # usa a extração em cache, se houver
-    python3 ferramentas/gerar.py --reextrair  # lê todos os PDFs de novo
+    python3 ferramentas/gerar.py              # usa dados/ e lê só os PDFs de exames novos
+    python3 ferramentas/gerar.py --reextrair  # relê todos os PDFs presentes na pasta
 
-Grava q-<matéria>.json e meta.json na raiz do repositório. A extração dos PDFs (a parte
-lenta) fica em cache em ferramentas/saida/brutas.json.
+As questões extraídas e os gabaritos já processados ficam versionados em ferramentas/dados/
+(brutas.json e gabaritos.json), então nenhum PDF antigo é necessário. Um PDF só é lido quando
+o exame ainda não está nesses arquivos (ex.: o 48º) ou com --reextrair. O resultado é gravado
+em q-<matéria>.json e meta.json, na raiz do repositório.
 """
 import json
 import os
@@ -15,24 +17,54 @@ sys.path.insert(0, AQUI)
 
 import fontes  # noqa: E402
 from classificar import classificar, resumo  # noqa: E402
-from extrair import extrair_todos  # noqa: E402
 from montar import montar  # noqa: E402
 
 RAIZ = os.path.dirname(AQUI)
-CACHE = os.path.join(AQUI, "saida", "brutas.json")
+BRUTAS = os.path.join(fontes.DADOS, "brutas.json")
+GABARITOS = os.path.join(fontes.DADOS, "gabaritos.json")
+
+
+def _ler(caminho):
+    if not os.path.exists(caminho):
+        return {}
+    with open(caminho) as f:
+        return json.load(f)
+
+
+def _gravar(caminho, dados):
+    os.makedirs(os.path.dirname(caminho), exist_ok=True)
+    with open(caminho, "w") as f:
+        json.dump(dados, f, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def main():
-    if "--reextrair" in sys.argv or not os.path.exists(CACHE):
-        print(f"Extraindo cadernos de {fontes.PASTA_PDFS} …")
-        brutas = extrair_todos()
-        os.makedirs(os.path.dirname(CACHE), exist_ok=True)
-        with open(CACHE, "w") as f:
-            json.dump(brutas, f, ensure_ascii=False)
-    else:
-        with open(CACHE) as f:
-            brutas = json.load(f)
-        print(f"Usando extração em cache ({len(brutas)} cadernos). Use --reextrair para ler os PDFs de novo.")
+    reextrair = "--reextrair" in sys.argv
+    brutas, gabaritos = _ler(BRUTAS), _ler(GABARITOS)
+    print(f"Dados versionados: {len(brutas)} provas. PDFs procurados em {fontes.PASTA_PDFS}")
+
+    cadernos = {ex: a for ex, a in fontes.cadernos().items() if reextrair or ex not in brutas}
+    if cadernos:
+        from extrair import extrair_caderno  # só precisa do PyMuPDF quando há PDF para ler
+        for exame, arquivo in sorted(cadernos.items()):
+            qs = extrair_caderno(fontes.caminho(arquivo))
+            problemas = [q["n"] for q in qs if len(q["alts"]) != 4 or not q["stem"]]
+            print(f"  caderno {exame}: {len(qs)} questões" + (f"  problemas: {problemas}" if problemas else ""))
+            brutas[exame] = qs
+        _gravar(BRUTAS, brutas)
+
+    arquivos_gab = {ex: a for ex, a in fontes.gabaritos().items() if reextrair or ex not in gabaritos}
+    if arquivos_gab:
+        from gabaritos import gabarito_do_pdf
+        for exame in sorted(arquivos_gab):
+            g = gabarito_do_pdf(exame)
+            print(f"  gabarito {exame}: {len(g)} respostas")
+            gabaritos[exame] = {str(n): letra for n, letra in g.items()}
+        _gravar(GABARITOS, gabaritos)
+
+    sem_gabarito = sorted(set(brutas) - set(gabaritos))
+    if sem_gabarito:
+        sys.exit(f"Falta o gabarito de: {', '.join(sem_gabarito)}. Salve o PDF como 'OAB NN - Gabarito Definitivo.pdf'.")
+    gabaritos = {ex: {int(n): l for n, l in g.items()} for ex, g in gabaritos.items()}
 
     print("Classificando por matéria (blocos por prova):")
     materias = {}
@@ -40,7 +72,7 @@ def main():
         materias[exame] = classificar(exame, brutas[exame])
         print(f"  {exame:7s} {resumo(materias[exame])}")
 
-    meta, descartes = montar(brutas, materias, RAIZ)
+    meta, descartes = montar(brutas, materias, gabaritos, RAIZ)
     print(f"\n{meta['total']} questões de {meta['exams']} provas gravadas em {RAIZ}")
     print(f"Descartadas: {descartes}")
     print("\nTemas mais recorrentes por matéria:")

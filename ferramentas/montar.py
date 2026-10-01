@@ -5,7 +5,6 @@ import os
 import re
 
 import fontes
-from gabaritos import gabarito
 from temas import atribuir_temas, resumo_de_temas
 
 ILEGIVEIS = re.compile(r"[\x00-\x08\x0b-\x1fϢ-Ͽ]")  # restos de fonte sem mapa de caracteres
@@ -56,12 +55,13 @@ def _correcoes_pontuais(exame, n, enunciado, alts):
     return enunciado, alts
 
 
-def montar(brutas, materias, destino):
+def montar(brutas, materias, gabaritos, destino):
+    """gabaritos: {exame: {número: 'A'..'D' ou '*'}}"""
     banco = collections.defaultdict(list)
     por_materia = collections.Counter()
     descartes = collections.Counter()
-    for exame, questoes in brutas.items():
-        gab = gabarito(exame)
+    for exame in sorted(brutas):
+        questoes, gab = brutas[exame], gabaritos[exame]
         anuladas = set(fontes.ANULADAS.get(exame, []))
         for q, materia in zip(questoes, materias[exame]):
             n = q["n"]

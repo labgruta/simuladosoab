@@ -1,4 +1,5 @@
-"""Lê o gabarito (tipo 1) de cada exame.
+"""Lê o gabarito (tipo 1) de um exame a partir do PDF. Só é usado para exames novos;
+os gabaritos já lidos ficam em dados/gabaritos.json.
 
 Uso avulso para conferir:  python3 gabaritos.py
 """
@@ -46,7 +47,7 @@ def _gabarito_correspondencia(texto):
     return gab
 
 
-def gabarito(exame):
+def gabarito_do_pdf(exame):
     """{número da questão: 'A'..'D' ou '*' (anulada)}"""
     texto = texto_do_pdf(fontes.gabaritos()[exame])
     if exame == "2010.2":  # "001 – C; 002 – A; ..."
@@ -59,5 +60,5 @@ def gabarito(exame):
 if __name__ == "__main__":
     for exame in sorted(fontes.gabaritos(), key=fontes.ordem_cronologica):
         total = fontes.total_questoes(exame)
-        g = gabarito(exame)
+        g = gabarito_do_pdf(exame)
         print(f"{exame:7s} {len(g):3d} " + "".join(g.get(i, "?") for i in range(1, total + 1)))

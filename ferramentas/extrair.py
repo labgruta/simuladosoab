@@ -9,8 +9,6 @@ from collections import defaultdict
 
 import pymupdf
 
-import fontes
-
 # Cabeçalhos e rodapés que se repetem em todas as páginas.
 # Estrito de propósito: "Exame de Ordem" sozinho aparece em enunciados de Ética.
 CABECALHO = re.compile(r"EXAME (DE|DO) ORDEM UNI|PROVA APLICADA|^P[áa]gina \d+$|Tipo\s+Branc|TIPO 0?1\s*[–-]|Qualquer semelhan", re.I)
@@ -131,18 +129,6 @@ def extrair_caderno(caminho):
         {"n": n, "stem": _juntar(q["stem"]), "alts": {k: _juntar(v) for k, v in q["alts"].items()}, "star": q["star"]}
         for n, q in sorted(questoes.items())
     ]
-
-
-def extrair_todos():
-    """{exame: [questões]} para todos os cadernos encontrados."""
-    brutas = {}
-    for exame, arquivo in sorted(fontes.cadernos().items()):
-        qs = extrair_caderno(fontes.caminho(arquivo))
-        problemas = [q["n"] for q in qs if len(q["alts"]) != 4 or not q["stem"]]
-        aviso = f"  problemas: {problemas}" if problemas else ""
-        print(f"  {exame:7s} {len(qs)} questões{aviso}")
-        brutas[exame] = qs
-    return brutas
 
 
 if __name__ == "__main__":
