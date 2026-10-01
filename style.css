@@ -183,6 +183,9 @@ select { width: 100%; font: inherit; padding: 9px 10px; border-radius: 10px; bor
 .history li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: .9rem; }
 .history li:first-child { border-top: 0; }
 .history .sc { font-weight: 700; font-variant-numeric: tabular-nums; }
+.history li { flex-wrap: wrap; align-items: center; }
+.history .hist-r { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.btn[aria-disabled="true"] { opacity: .6; cursor: progress; }
 .foot { margin-top: 24px; }
 
 /* quiz */

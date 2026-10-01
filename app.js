@@ -80,6 +80,11 @@ function fmtTime(sec) {
   const mm = String(m).padStart(2, "0"), ss = String(s).padStart(2, "0");
   return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
+// data e hora para nome de arquivo: 2026-10-01-1430
+function stamp(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
 function toast(msg) {
   const t = $("#toast");
   t.textContent = msg; t.hidden = false;
@@ -410,10 +415,8 @@ async function downloadPdf() {
   try {
     const { items, label } = await draw();
     const now = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
     const rich = items.map((q) => ({ ...q, subjectName: BY_ID[q.s].name, subjectShort: BY_ID[q.s].short, topicName: topicName(q.s, q.t) }));
-    await window.SimuladoPdf.baixar(rich, { label, date: now.toLocaleDateString("pt-BR") }, `simulado-oab-${stamp}.pdf`, pdfLayout());
+    await window.SimuladoPdf.baixar(rich, { label, date: now.toLocaleDateString("pt-BR") }, `simulado-oab-${stamp(now)}.pdf`, pdfLayout());
     toast(`PDF com ${items.length} questões baixado. Clique de novo para sortear outra prova.`);
   } catch (e) {
     toast(e.message || "Erro ao gerar o PDF.");
@@ -571,7 +574,12 @@ function finish() {
   s.items.forEach((q, i) => { if (s.answers[i] != null) seen.add(q.id); });
   store.set("oab.seen", [...seen].slice(-6000));
   const hist = store.get("oab.history", []);
-  hist.unshift({ t: Date.now(), label: s.label, n: s.items.length, c: correct, mode: s.mode, time: s.elapsed });
+  // qs (código e matéria de cada questão) e ans (respostas) permitem baixar a correção depois;
+  // os textos das questões não são guardados, vêm do banco na hora de gerar o PDF
+  hist.unshift({
+    t: Date.now(), label: s.label, n: s.items.length, c: correct, mode: s.mode, time: s.elapsed,
+    qs: s.items.map((q) => [q.id, q.s]), ans: s.answers.slice(),
+  });
   store.set("oab.history", hist.slice(0, 30));
   store.del("oab.session");
   renderResult(s, correct);
@@ -673,16 +681,65 @@ function renderHistory() {
   $("#historyBox").hidden = hist.length === 0;
   const ul = $("#history");
   ul.innerHTML = "";
+  let semCorrecao = false;
   for (const h of hist.slice(0, 10)) {
     const li = document.createElement("li");
     const d = new Date(h.t);
     const left = document.createElement("span");
     left.textContent = `${d.toLocaleDateString("pt-BR")} · ${h.label}`;
     const right = document.createElement("span");
-    right.className = "sc";
-    right.textContent = `${h.c}/${h.n} (${Math.round((h.c / h.n) * 100)}%)`;
+    right.className = "hist-r";
+    const sc = document.createElement("span");
+    sc.className = "sc";
+    sc.textContent = `${h.c}/${h.n} (${Math.round((h.c / h.n) * 100)}%)`;
+    right.appendChild(sc);
+    if (h.qs && h.ans) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "btn ghost small";
+      b.dataset.desc = `do simulado de ${d.toLocaleDateString("pt-BR")}, ${h.label}, ${h.c} de ${h.n} acertos`;
+      rotulo(b, "Correção em PDF");
+      b.addEventListener("click", () => downloadCorrection(h, b));
+      right.appendChild(b);
+    } else semCorrecao = true;
     li.append(left, right);
     ul.appendChild(li);
+  }
+  $("#histNote").hidden = !semCorrecao;
+}
+// texto visível do botão + nome acessível que começa por ele e diz de qual simulado é
+function rotulo(btn, texto) {
+  btn.textContent = texto;
+  btn.setAttribute("aria-label", `${texto} ${btn.dataset.desc}`);
+}
+// PDF da correção de um simulado do histórico: as questões vêm do banco pelos códigos guardados.
+// Enquanto gera, o botão fica aria-disabled (e não disabled) para não perder o foco do teclado.
+async function downloadCorrection(h, btn) {
+  if (btn.getAttribute("aria-disabled") === "true") return;
+  btn.setAttribute("aria-disabled", "true"); rotulo(btn, "Gerando PDF…");
+  try {
+    await Promise.all([...new Set(h.qs.map(([, s]) => s))].map(loadSubject));
+    const items = [], respostas = [];
+    h.qs.forEach(([id, s], i) => {
+      const q = cache[s].find((x) => x.id === id);
+      if (!q) return; // questão que saiu do banco depois do simulado
+      items.push({ ...q, s, subjectName: BY_ID[s].name, subjectShort: BY_ID[s].short, topicName: topicName(s, q.t) });
+      respostas.push(h.ans[i] ?? null);
+    });
+    if (!items.length) throw new Error("As questões deste simulado não estão mais no banco.");
+    const d = new Date(h.t);
+    const blank = respostas.filter((a) => a == null).length;
+    const resumo = `Feito em ${d.toLocaleDateString("pt-BR")}, às ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+      + ` · ${h.c} de ${h.n} acertos (${Math.round((h.c / h.n) * 100)}%)` + (blank ? ` · ${blank} em branco` : "")
+      + ` · ${h.mode === "study" ? "modo estudo" : "modo prova"} · tempo ${fmtTime(h.time || 0)}`;
+    await window.SimuladoPdf.baixar(items, { label: h.label, date: d.toLocaleDateString("pt-BR"), respostas, resumo },
+      `correcao-simulado-oab-${stamp(d)}.pdf`, pdfLayout());
+    toast(items.length < h.qs.length
+      ? `Correção baixada. ${h.qs.length - items.length} questão(ões) não estão mais no banco e ficaram de fora.`
+      : "Correção em PDF baixada.");
+  } catch (e) {
+    toast(e.message || "Erro ao gerar o PDF.");
+  } finally {
+    btn.removeAttribute("aria-disabled"); rotulo(btn, "Correção em PDF");
   }
 }
 function renderResume() {
@@ -731,7 +788,7 @@ async function init() {
   });
   $("#discardBtn").addEventListener("click", () => { store.del("oab.session"); renderResume(); });
   $("#clearHist").addEventListener("click", () => {
-    if (confirm("Apagar o histórico e a lista de questões já respondidas?")) {
+    if (confirm("Apagar o histórico (com as correções em PDF) e a lista de questões já respondidas?")) {
       store.del("oab.history"); store.del("oab.seen"); renderHistory();
     }
   });

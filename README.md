@@ -9,6 +9,7 @@ Simulador online da 1ª fase do Exame de Ordem, com 3.665 questões oficiais de 
 - Modo prova (gabarito no final) ou modo estudo (resposta a cada questão), cronômetro opcional no ritmo da OAB.
 - Aparência ajustável na tela inicial e, a qualquer momento (inclusive durante o simulado), pelo ícone de formatação no alto da tela: 6 fontes (Fonte OAB, a padrão, com as medidas da Calibri dos cadernos; iA Writer Duo, Atkinson Hyperlegible, Lexend, Literata, Lora), embarcadas em `fonts/`, e 8 combinações de cor de fundo e texto.
 - Correção com desempenho por matéria, histórico, "sortear outro simulado" com a mesma configuração e opção de refazer as questões erradas.
+- "Correção em PDF" em cada simulado do histórico: todas as questões, com a resposta certa em verde (e sinal de certo) e a resposta errada em vermelho (e X), uma linha por questão dizendo o que foi marcado e, no fim, o gabarito ao lado das suas respostas. Usa a mesma diagramação escolhida para o PDF da prova. O histórico guarda só os códigos das questões e as respostas; os textos vêm do banco na hora.
 
 ## Estrutura
 

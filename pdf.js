@@ -5,6 +5,10 @@
 //   "prova"         igual ao caderno da OAB: A4, 2 colunas, corpo 9, número da questão sobre um fio,
 //                   fio entre as colunas, texto justificado, sem matéria/origem no corpo;
 //   "personalizado" 1, 2 ou 3 colunas, corpo 9 a 12, com matéria e origem de cada questão.
+// Com info.respostas, gera a correção de um simulado feito, na mesma diagramação, mas colorida: a
+// alternativa certa em verde (com sinal de certo) e a marcada errada em vermelho (com X), além de
+// uma linha escrita por questão ("Errada: você marcou B; a certa é C"), para quem não distingue cores
+// ou imprime em preto e branco.
 // Funciona no navegador (window.SimuladoPdf) e no Node (module.exports), para testes.
 (function (root) {
   const JSPDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js";
@@ -25,6 +29,12 @@
   };
   const A4 = { w: 595.28, h: 841.89 };
   const LETTERS = "ABCD";
+  // Cores da correção (texto sobre fundo com contraste acima de 6:1)
+  const COR = {
+    certa: { texto: [22, 101, 62], fundo: [226, 243, 233] },
+    errada: { texto: [166, 32, 26], fundo: [251, 231, 229] },
+    branco: [90, 90, 90],
+  };
 
   // Helvetica (reserva) só cobre Latin-1: troca aspas curvas, travessões etc.
   function latin1Helvetica(s) {
@@ -50,8 +60,12 @@
 
   // fonte: { normal, bold } em base64 (TTF). Sem ela, o PDF sai em Helvetica.
   // layout: { modo: "prova" | "personalizado", colunas, tamanho }
+  // info: { label, date } na prova; na correção também respostas (índice ou null, uma por
+  // questão) e resumo (linha com acertos, modo e tempo).
   function montar(jsPDF, items, info, fonte, layout) {
+    const correcao = Array.isArray(info.respostas);
     const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
+    if (typeof doc.setLanguage === "function") doc.setLanguage("pt-BR");
     let familia = "helvetica", txt = latin1Helvetica;
     if (fonte && fonte.normal && fonte.bold) {
       doc.addFileToVFS("FonteOAB-Regular.ttf", fonte.normal);
@@ -60,25 +74,59 @@
       doc.addFont("FonteOAB-Bold.ttf", "FonteOAB", "bold");
       familia = "FonteOAB"; txt = oab;
     }
-    const titulo = txt("Simulado OAB – 1ª fase");
+    const titulo = txt(correcao ? "Correção do simulado OAB – 1ª fase" : "Simulado OAB – 1ª fase");
     doc.setProperties({ title: titulo, subject: info.label, creator: "Simulados OAB" });
     doc.setTextColor(0, 0, 0); doc.setDrawColor(0, 0, 0);
 
     const g = geometria(layout);
+    if (correcao) g.origem = true; // na correção, matéria e origem sempre aparecem
     const m = (v) => v * g.corpo / 9; // medida da prova na escala do corpo escolhido
     const largura = A4.w - g.esq - g.dir;
     const colW = (largura - g.intervalo * (g.colunas - 1)) / g.colunas;
     const colX = (c) => g.esq + c * (colW + g.intervalo);
     const font = (style, size) => { doc.setFont(familia, style); doc.setFontSize(size); };
 
+    // trechos de texto em sequência na mesma linha: [texto, cor ou null, negrito?]
+    const trechos = (partes, x, y, size) => {
+      for (const [t, cor, negrito] of partes) {
+        font(negrito ? "bold" : "normal", size);
+        doc.setTextColor(...(cor || [0, 0, 0]));
+        doc.text(txt(t), x, y);
+        x += doc.getTextWidth(txt(t));
+      }
+      doc.setTextColor(0, 0, 0);
+    };
+    // sinais de certo e X desenhados (a Fonte OAB não tem ✓ e ✗), à esquerda do texto
+    const sinal = (tipo, x, y) => {
+      doc.setLineWidth(1.1); doc.setLineCap("round");
+      if (tipo === "certa") {
+        doc.setDrawColor(...COR.certa.texto);
+        doc.line(x, y - 3, x + 1.8, y - 1); doc.line(x + 1.8, y - 1, x + 5.2, y - 6);
+      } else {
+        doc.setDrawColor(...COR.errada.texto);
+        doc.line(x, y - 6, x + 4.6, y - 1.2); doc.line(x + 4.6, y - 6, x, y - 1.2);
+      }
+      doc.setDrawColor(0, 0, 0); doc.setLineCap("butt");
+    };
+
     // --- título da primeira página (largura total) ---
     font("bold", 14);
     doc.text(titulo, g.esq, 56);
     font("normal", 8.5);
-    doc.text(txt(`${items.length} questões · ${info.label}`), g.esq, 70);
-    doc.text(doc.splitTextToSize(txt(`Gerado em ${info.date} · questões oficiais do Exame de Ordem Unificado (OAB/FGV), sem as anuladas. Gabarito na última página.`), largura)[0], g.esq, 81);
-    doc.setLineWidth(0.5); doc.line(g.esq, 88, A4.w - g.dir, 88);
-    const topoPagina1 = 96;
+    doc.text(doc.splitTextToSize(txt(`${items.length} questões · ${info.label}`), largura)[0], g.esq, 70);
+    let regua = 88;
+    if (correcao) {
+      doc.text(doc.splitTextToSize(txt(info.resumo), largura)[0], g.esq, 81);
+      trechos([
+        ["Em ", null], ["verde", COR.certa.texto, true], [" (com sinal de certo), a resposta certa; em ", null],
+        ["vermelho", COR.errada.texto, true], [" (com X), a sua resposta quando errada.", null],
+      ], g.esq, 92, 8.5);
+      regua = 99;
+    } else {
+      doc.text(doc.splitTextToSize(txt(`Gerado em ${info.date} · questões oficiais do Exame de Ordem Unificado (OAB/FGV), sem as anuladas. Gabarito na última página.`), largura)[0], g.esq, 81);
+    }
+    doc.setLineWidth(0.5); doc.line(g.esq, regua, A4.w - g.dir, regua);
+    const topoPagina1 = regua + 8;
 
     // --- fluxo em colunas: "base" é a linha de base do último elemento da coluna atual ---
     let pagina = 1, col = 0, base = null;
@@ -124,8 +172,14 @@
       if (g.origem && q.subjectName !== materia) { // matéria: só no personalizado
         materia = q.subjectName; aposMateria = true;
         font("bold", g.corpo * 0.9);
-        const y = posicionar(m(PROVA.textoNumero), m(9), m(PROVA.textoNumero + PROVA.numeroTexto + PROVA.entrelinha * 2));
-        doc.text(txt(materia.toUpperCase()), colX(col), y);
+        // em colunas estreitas o nome da matéria quebra em mais de uma linha
+        const linhas = doc.splitTextToSize(txt(materia.toUpperCase()), colW);
+        linhas.forEach((linha, k) => {
+          const y = k === 0
+            ? posicionar(m(PROVA.textoNumero), m(9), m(PROVA.textoNumero + PROVA.numeroTexto + PROVA.entrelinha * (linhas.length + 1)))
+            : posicionar(m(PROVA.entrelinha), m(9));
+          doc.text(linha, colX(col), y);
+        });
       }
       // número da questão e fio, com ao menos 3 linhas de texto na mesma coluna
       const gapNumero = aposMateria ? m(PROVA.entrelinha * 1.6) : m(PROVA.textoNumero);
@@ -142,17 +196,38 @@
       doc.setLineWidth(0.5);
       doc.line(colX(col) - 1.5, yNum + m(PROVA.fio), colX(col) + colW, yNum + m(PROVA.fio));
 
-      q.q.split("\n").forEach((para, j) => paragrafo(para, 0, j === 0 ? m(PROVA.numeroTexto) : m(PROVA.paragrafo)));
+      // correção: situação da questão por escrito, logo abaixo do número
+      const resp = correcao ? info.respostas[i] : null;
+      if (correcao) {
+        const [cor, msg] = resp == null ? [COR.branco, `Em branco. A resposta certa é ${LETTERS[q.r]}.`]
+          : resp === q.r ? [COR.certa.texto, `Certa: você marcou ${LETTERS[resp]}.`]
+          : [COR.errada.texto, `Errada: você marcou ${LETTERS[resp]}; a certa é ${LETTERS[q.r]}.`];
+        font("bold", g.corpo);
+        doc.setTextColor(...cor);
+        doc.text(txt(msg), colX(col), posicionar(m(PROVA.numeroTexto), m(9)));
+        doc.setTextColor(0, 0, 0);
+      }
+      q.q.split("\n").forEach((para, j) => paragrafo(para, 0, j === 0 && !correcao ? m(PROVA.numeroTexto) : m(PROVA.paragrafo)));
       q.a.forEach((alt, j) => {
-        font("normal", g.corpo);
+        const destaque = !correcao ? null : j === q.r ? "certa" : j === resp ? "errada" : null;
+        font(destaque ? "bold" : "normal", g.corpo);
         const w = colW - m(PROVA.recuo);
         const linhas = doc.splitTextToSize(txt(alt), w);
         linhas.forEach((linha, l) => {
           const gap = l > 0 ? m(PROVA.entrelinha) : (j === 0 ? m(PROVA.paragrafo) : m(PROVA.alternativa));
           const y = posicionar(gap, m(9));
+          if (destaque) {
+            // faixa de fundo linha a linha (a alternativa pode mudar de coluna no meio)
+            const ultima = l === linhas.length - 1;
+            doc.setFillColor(...COR[destaque].fundo);
+            doc.rect(colX(col) - 1.5, y - m(8.6), colW + 3, ultima ? m(12) : m(PROVA.entrelinha), "F");
+            doc.setTextColor(...COR[destaque].texto);
+            if (l === 0) sinal(destaque, colX(col) - 8.5, y);
+          }
           if (l === 0) doc.text(`(${LETTERS[j]})`, colX(col), y);
           linhaJustificada(linha, colX(col) + m(PROVA.recuo), y, w, l === linhas.length - 1);
         });
+        doc.setTextColor(0, 0, 0);
       });
     });
 
@@ -170,20 +245,35 @@
       }
     }
 
-    // --- gabarito (página própria, largura total) ---
+    // --- gabarito (página própria, largura total); na correção, com a sua resposta ao lado ---
     doc.addPage();
     font("bold", 14);
-    doc.text("Gabarito", g.esq, 56);
+    doc.text(correcao ? txt("Gabarito e suas respostas") : "Gabarito", g.esq, 56);
     doc.setLineWidth(0.5); doc.line(g.esq, 64, A4.w - g.dir, 64);
+    let inicio = 84;
+    if (correcao) {
+      trechos([
+        ["Em cada linha: número, resposta certa, a sua resposta (", null], ["verde", COR.certa.texto, true],
+        [" se acertou, ", null], ["vermelho", COR.errada.texto, true], [" se errou, – em branco) e a origem.", null],
+      ], g.esq, 78, 8.5);
+      inicio = 96;
+    }
     const porColuna = Math.ceil(items.length / 2), metade = largura / 2;
-    const passo = Math.min(PROVA.paragrafo, (780 - 84) / porColuna);
+    const passo = Math.min(PROVA.paragrafo, (780 - inicio) / porColuna);
+    const dxOrigem = correcao ? 54 : 38;
     items.forEach((q, i) => {
-      const c = Math.floor(i / porColuna), y = 84 + (i % porColuna) * passo, x = g.esq + c * metade;
+      const c = Math.floor(i / porColuna), y = inicio + (i % porColuna) * passo, x = g.esq + c * metade;
       font("bold", 9.5);
       doc.text(`${i + 1}.`, x + 18, y, { align: "right" });
       doc.text(LETTERS[q.r], x + 24, y);
+      if (correcao) {
+        const r = info.respostas[i];
+        doc.setTextColor(...(r == null ? COR.branco : r === q.r ? COR.certa.texto : COR.errada.texto));
+        doc.text(r == null ? txt("–") : LETTERS[r], x + 38, y);
+        doc.setTextColor(0, 0, 0);
+      }
       font("normal", 8.5);
-      doc.text(doc.splitTextToSize(txt(`${q.subjectShort} · ${q.e}, q. ${q.n}`), metade - 44)[0], x + 38, y);
+      doc.text(doc.splitTextToSize(txt(`${q.subjectShort} · ${q.e}, q. ${q.n}`), metade - dxOrigem - 6)[0], x + dxOrigem, y);
     });
 
     // --- cabeçalho e rodapé de todas as páginas ---
@@ -191,7 +281,7 @@
     for (let p = 1; p <= total; p++) {
       doc.setPage(p);
       font("normal", 7);
-      if (p > 1) doc.text(txt("SIMULADO OAB – 1ª FASE"), A4.w - g.dir, 49, { align: "right" });
+      if (p > 1) doc.text(txt(correcao ? "CORREÇÃO DO SIMULADO OAB – 1ª FASE" : "SIMULADO OAB – 1ª FASE"), A4.w - g.dir, 49, { align: "right" });
       doc.setLineWidth(0.5); doc.line(48, 794, A4.w - 37, 794);
       doc.text("Simulados OAB", 48, 805.5);
       doc.text(txt(`Página ${p} de ${total}`), A4.w - 37, 805.5, { align: "right" });
