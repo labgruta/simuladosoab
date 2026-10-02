@@ -24,7 +24,8 @@ import pymupdf
 
 SITE = "https://examedeordem.oab.org.br/EditaisProvas?NumeroExame="
 UA = {"User-Agent": "Mozilla/5.0 (simuladosoab)"}
-FORA_DA_1A_FASE = re.compile(r"Reaplica|Salvador|Porto Alegre|Ipatinga|Direito|2ª fase|Prático|Padrão", re.I)
+# reaplicações regionais ("Examinandos de Duque de Caxias/RJ") têm caderno e gabarito próprios
+FORA_DA_1A_FASE = re.compile(r"Reaplica|Examinandos de|Salvador|Porto Alegre|Ipatinga|Duque de Caxias|Direito|2ª fase|Prático|Padrão", re.I)
 
 
 def _get(url):
@@ -136,7 +137,7 @@ def baixar(pasta, so=None):
             tipo = _tipo_comunicado(texto)
             if not tipo:
                 continue
-            extra = " (reaplicação)" if re.search(r"Reaplica|Salvador|Ipatinga|Porto Alegre", l["titulo"] + texto[:400], re.I) else ""
+            extra = " (reaplicação)" if re.search(r"Reaplica|Examinandos de|Salvador|Ipatinga|Porto Alegre|Duque de Caxias", l["titulo"] + texto[:400], re.I) else ""
             arq = f"OAB {cod} - {tipo} ({l['data']}){extra}.pdf"
             k = 2
             while arq in r["anulacao"] + r["sem_anulacao"] + r.get("retificacao", []):  # dois comunicados no mesmo dia

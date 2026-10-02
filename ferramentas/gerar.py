@@ -75,8 +75,8 @@ def main():
         print(f"  {exame:7s} {resumo(materias[exame])}")
 
     meta, descartes = montar(brutas, materias, gabaritos, RAIZ)
-    print(f"\n{meta['total']} questões de {meta['exams']} provas gravadas em {RAIZ}")
-    print(f"Descartadas: {descartes}")
+    print(f"\n{meta['total']} questões sorteáveis de {meta['exams']} provas gravadas em {RAIZ}")
+    print(f"Descartadas: {descartes}. Desatualizadas pela lei (ficam no banco com aviso, fora dos sorteios): {meta['desatualizadas']}")
     print("\nTemas mais recorrentes por matéria:")
     for materia, temas in meta["temas"].items():
         rec = [f"{t['nome']} ({t['n']})" for t in temas if t["rec"]]

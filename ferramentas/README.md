@@ -38,11 +38,20 @@ ferramentas/.venv/bin/python ferramentas/revisar.py revisao.md
 4. Rode `ferramentas/.venv/bin/python ferramentas/gerar.py`. Ele lê só os dois PDFs novos, acrescenta o exame em `dados/` e confere a linha do exame no resumo (ex.: `48  ET8 FI2 CO6 ...`). Se a distribuição do edital mudar, ajuste `MODELOS` em `classificar.py`.
 5. Faça commit de `dados/`, dos `q-*.json` e do `meta.json`. O Cloudflare publica sozinho. Depois disso os PDFs podem ser apagados.
 
+## Questões afetadas por mudança na lei
+
+`dados/notas.json` guarda, por questão (`exame-número`), um aviso com `tipo` e `texto`. O `montar.py` copia o aviso para a questão (campo `nota`) e o app o mostra depois da resposta, na revisão do resultado e no gabarito do PDF.
+
+- `desatualizada`: a resposta oficial deixou de valer pela norma atual. A questão fica no banco, para as correções de simulados antigos, mas não entra nos sorteios nem na contagem.
+- `conferir`: a resposta continua valendo, mas o fundamento mudou; só o aviso é exibido.
+
+A lista atual vem da revisão de 01/10/2026, feita com a Lei 8.906/1994 compilada no Planalto e o Código de Ética atualizado do Conselho Federal.
+
 ## Como funciona
 
 | Arquivo | O que faz |
 |---|---|
-| `dados/` | Questões extraídas (`brutas.json`) e gabaritos (`gabaritos.json`, `*` = anulada) de cada exame já processado. |
+| `dados/` | Questões extraídas (`brutas.json`), gabaritos (`gabaritos.json`, `*` = anulada) e avisos de mudança na lei por questão (`notas.json`). |
 | `fontes.py` | Pasta dos PDFs, padrão de nome dos arquivos e questões anuladas por exame. |
 | `extrair.py` | Lê o caderno em duas colunas, remove cabeçalhos e rodapés, separa enunciado e alternativas. Corrige PDFs que quebram cada linha em dois pedaços. |
 | `ocr.py` | OCR (Vision, macOS) para páginas com fonte sem mapa de caracteres, hoje parte do XXXV Exame. |

@@ -74,11 +74,23 @@ def _correcoes_pontuais(exame, n, enunciado, alts):
     return enunciado, alts
 
 
+def _notas():
+    """dados/notas.json: avisos de mudança na lei por questão. 'desatualizada' sai dos sorteios no app;
+    'conferir' só mostra o aviso depois da resposta."""
+    caminho = os.path.join(fontes.DADOS, "notas.json")
+    if not os.path.exists(caminho):
+        return {}
+    with open(caminho) as f:
+        return {k: v for k, v in json.load(f).items() if not k.startswith("_")}
+
+
 def montar(brutas, materias, gabaritos, destino):
     """gabaritos: {exame: {número: 'A'..'D' ou '*'}}"""
     banco = collections.defaultdict(list)
     por_materia = collections.Counter()
     descartes = collections.Counter()
+    notas = _notas()
+    fora_dos_sorteios = 0
     for exame in sorted(brutas):
         questoes, gab = brutas[exame], gabaritos[exame]
         anuladas = set(fontes.ANULADAS.get(exame, []))
@@ -97,11 +109,18 @@ def montar(brutas, materias, gabaritos, destino):
             if sorted(alts) != ["A", "B", "C", "D"] or not enunciado or not all(alts.values()):
                 descartes["texto incompleto"] += 1
                 continue
-            banco[materia].append({
-                "id": f"{exame}-{n}", "e": nome_do_exame(exame), "n": n,
-                "q": enunciado, "a": [alts[k] for k in "ABCD"], "r": "ABCD".index(resposta),
-            })
-            por_materia[materia] += 1
+            q = {"id": f"{exame}-{n}", "e": nome_do_exame(exame), "n": n,
+                 "q": enunciado, "a": [alts[k] for k in "ABCD"], "r": "ABCD".index(resposta)}
+            nota = notas.pop(q["id"], None)
+            if nota:
+                q["nota"] = nota
+            banco[materia].append(q)
+            if not nota or nota["tipo"] != "desatualizada":  # contagem = questões sorteáveis
+                por_materia[materia] += 1
+            else:
+                fora_dos_sorteios += 1
+    if notas:
+        raise SystemExit(f"Notas para questões que não estão no banco: {sorted(notas)}")
 
     for materia, lista in banco.items():
         atribuir_temas(materia, lista)
@@ -113,7 +132,8 @@ def montar(brutas, materias, gabaritos, destino):
             json.dump(lista, f, ensure_ascii=False, separators=(",", ":"))
     exames = {q["id"].rsplit("-", 1)[0] for lista in banco.values() for q in lista}
     meta = {"counts": dict(por_materia), "total": sum(por_materia.values()),
-            "exams": len(exames), "anuladas": descartes["anulada"], "temas": temas}
+            "exams": len(exames), "anuladas": descartes["anulada"],
+            "desatualizadas": fora_dos_sorteios, "temas": temas}
     with open(os.path.join(destino, "meta.json"), "w") as f:
         json.dump(meta, f, ensure_ascii=False)
     return meta, dict(descartes)
