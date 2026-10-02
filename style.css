@@ -217,6 +217,8 @@ select { width: 100%; font: inherit; padding: 9px 10px; border-radius: 10px; bor
 .feedback { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-weight: 600; }
 .feedback.ok { background: var(--ok-bg); color: var(--ok); }
 .feedback.bad { background: var(--bad-bg); color: var(--bad); }
+.nota { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--warn); border-radius: 0 10px 10px 0; background: var(--surface-2); font-size: .92rem; }
+.nota strong { color: var(--warn); }
 .quiz-nav { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; }
 .quiz-nav #nextBtn { justify-self: end; }
 .quiz-nav #prevBtn { justify-self: start; }

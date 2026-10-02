@@ -361,7 +361,8 @@ async function draw() {
   for (const id of ids) {
     const all = await loadSubject(id);
     const rec = st.rec ? recTopics(id) : null;
-    pools[id] = all.filter((q) => examOrdinal(q.id) >= minEx && (!rec || rec.has(q.t)));
+    // questões desatualizadas pela lei (q.nota.tipo) ficam no banco só para correções antigas
+    pools[id] = all.filter((q) => q.nota?.tipo !== "desatualizada" && examOrdinal(q.id) >= minEx && (!rec || rec.has(q.t)));
   }
   const avail = Object.fromEntries(ids.map((id) => [id, pools[id].length]));
   const plan = allocate(ids, st.qty, avail);
@@ -504,6 +505,15 @@ function paintGrid() {
   $("#progBar").style.width = `${(done / session.items.length) * 100}%`;
   $("#progText").textContent = `Questão ${session.idx + 1} de ${session.items.length} · ${done} respondida${done === 1 ? "" : "s"}`;
 }
+// aviso de mudança na lei (ferramentas/dados/notas.json), mostrado depois da resposta
+function paintNota(el, q) {
+  el.hidden = !q.nota;
+  if (!q.nota) return;
+  el.textContent = "";
+  const b = document.createElement("strong");
+  b.textContent = q.nota.tipo === "desatualizada" ? "Questão desatualizada. " : "Atualização da lei. ";
+  el.append(b, q.nota.texto);
+}
 function renderQuestion() {
   const i = session.idx, q = session.items[i], a = session.answers[i];
   const locked = session.mode === "study" && a != null;
@@ -536,6 +546,7 @@ function renderQuestion() {
     fb.className = `feedback ${a === q.r ? "ok" : "bad"}`;
     fb.textContent = a === q.r ? "Correta!" : `Incorreta. Resposta certa: ${LETTERS[q.r]}.`;
   } else fb.hidden = true;
+  if (locked) paintNota($("#qNota"), q); else $("#qNota").hidden = true;
   $("#prevBtn").disabled = i === 0;
   $("#nextBtn").textContent = i === session.items.length - 1 ? "Concluir" : "Próxima →";
   $("#flagBtn").textContent = session.flags[i] ? "★ Marcada" : "☆ Marcar";
@@ -669,6 +680,7 @@ function renderReview(s) {
       alts.appendChild(el);
     });
     body.append(src, txt, alts);
+    if (q.nota) { const n = document.createElement("p"); n.className = "nota"; paintNota(n, q); body.append(n); }
     d.append(sm, body);
     box.appendChild(d);
   });
@@ -768,7 +780,8 @@ async function init() {
     const r = await fetch("meta.json");
     meta = await r.json();
     $("#introStats").textContent =
-      `${meta.total.toLocaleString("pt-BR")} questões oficiais de ${meta.exams} provas (Exame 2010.2 ao 47º), sem as anuladas.`;
+      `${meta.total.toLocaleString("pt-BR")} questões oficiais de ${meta.exams} provas (Exame 2010.2 ao 47º), sem as anuladas`
+      + (meta.desatualizadas ? ` e sem as ${meta.desatualizadas} desatualizadas pela lei.` : ".");
   } catch {
     $("#introStats").textContent = "Não foi possível carregar o banco de questões. Recarregue a página.";
   }

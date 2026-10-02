@@ -276,6 +276,25 @@
       doc.text(doc.splitTextToSize(txt(`${q.subjectShort} · ${q.e}, q. ${q.n}`), metade - dxOrigem - 6)[0], x + dxOrigem, y);
     });
 
+    // avisos de mudança na lei (q.nota), abaixo do gabarito; continuam em outra página se faltar espaço
+    const comNota = items.map((q, i) => [q, i]).filter(([q]) => q.nota);
+    if (comNota.length) {
+      let y = inicio + porColuna * passo + 18;
+      const cabe = (h) => { if (y + h > 780) { doc.addPage(); y = 70; } };
+      cabe(30);
+      font("bold", 10);
+      doc.text(txt("Atualizações da legislação"), g.esq, y);
+      y += 16;
+      for (const [q, i] of comNota) {
+        font("normal", 8.5);
+        const rotuloNota = q.nota.tipo === "desatualizada" ? "desatualizada" : "atualização";
+        const linhas = doc.splitTextToSize(txt(`${i + 1}. ${q.e}, q. ${q.n} (${rotuloNota}): ${q.nota.texto}`), largura);
+        cabe(linhas.length * 11);
+        linhas.forEach((l) => { doc.text(l, g.esq, y); y += 11; });
+        y += 4;
+      }
+    }
+
     // --- cabeçalho e rodapé de todas as páginas ---
     const total = doc.getNumberOfPages();
     for (let p = 1; p <= total; p++) {
